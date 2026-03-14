@@ -1,0 +1,139 @@
+---
+title: 'Setup Environment'
+description: 'Configure your development environment for MiroFish with LLM API and Zep memory graph integration'
+---
+
+## Overview
+
+Before running MiroFish simulations, you need to configure your environment with the necessary API credentials. MiroFish requires:
+
+- **LLM API**: For powering intelligent agents (supports OpenAI-compatible APIs)
+- **Zep Cloud**: For knowledge graph and memory management
+- **Optional**: Accelerated LLM endpoints for improved performance
+
+<Steps>
+  <Step title="Copy the environment template">
+    Create your configuration file from the example template:
+
+    ```bash
+    cp .env.example .env
+    ```
+  </Step>
+
+  <Step title="Configure LLM API credentials">
+    MiroFish supports any LLM API that follows the OpenAI SDK format. The recommended option is Alibaba's Qwen-Plus model via Bailian platform.
+
+    Open `.env` and configure the following:
+
+    ```env
+    # LLM API Configuration (OpenAI SDK compatible)
+    # Recommended: Alibaba Bailian platform with qwen-plus model
+    # https://bailian.console.aliyun.com/
+    LLM_API_KEY=your_api_key_here
+    LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+    LLM_MODEL_NAME=qwen-plus
+    ```
+
+    <Note>
+      **Cost Warning**: LLM consumption can be significant. For initial testing, try simulations with fewer than 40 rounds.
+    </Note>
+
+    <CodeGroup>
+      ```env Alibaba Qwen (Recommended)
+      LLM_API_KEY=sk-xxxxxxxxxxxxx
+      LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+      LLM_MODEL_NAME=qwen-plus
+      ```
+
+      ```env OpenAI
+      LLM_API_KEY=sk-xxxxxxxxxxxxx
+      LLM_BASE_URL=https://api.openai.com/v1
+      LLM_MODEL_NAME=gpt-4
+      ```
+
+      ```env Custom Endpoint
+      LLM_API_KEY=your_api_key
+      LLM_BASE_URL=https://your-custom-endpoint.com/v1
+      LLM_MODEL_NAME=your-model-name
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Configure Zep memory graph">
+    Zep Cloud provides knowledge graph capabilities for agent memory. The free tier is sufficient for simple use cases.
+
+    1. Sign up at [Zep Cloud](https://app.getzep.com/)
+    2. Create a new project and get your API key
+    3. Add it to your `.env` file:
+
+    ```env
+    # Zep Memory Graph Configuration
+    # Free tier available: https://app.getzep.com/
+    ZEP_API_KEY=your_zep_api_key_here
+    ```
+  </Step>
+
+  <Step title="(Optional) Configure LLM acceleration">
+    For improved performance, you can configure an accelerated LLM endpoint:
+
+    ```env
+    # Accelerated LLM Configuration (Optional)
+    # Only include these if using acceleration
+    LLM_BOOST_API_KEY=your_api_key_here
+    LLM_BOOST_BASE_URL=your_base_url_here
+    LLM_BOOST_MODEL_NAME=your_model_name_here
+    ```
+
+    <Warning>
+      If you're not using LLM acceleration, **do not include** these variables in your `.env` file. Their presence will activate acceleration mode even with empty values.
+    </Warning>
+  </Step>
+
+  <Step title="Verify configuration">
+    Check that all required variables are set:
+
+    ```bash
+    # Should output your API keys (masked)
+    grep -E '^(LLM_API_KEY|ZEP_API_KEY)=' .env
+    ```
+
+    Your configuration is ready when:
+    - ✅ `LLM_API_KEY` is set
+    - ✅ `LLM_BASE_URL` points to your LLM provider
+    - ✅ `LLM_MODEL_NAME` specifies your model
+    - ✅ `ZEP_API_KEY` is configured
+  </Step>
+</Steps>
+
+## Environment Variables Reference
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|----------|
+| `LLM_API_KEY` | Yes | API key for LLM service | `sk-xxxxxx` |
+| `LLM_BASE_URL` | Yes | Base URL for LLM API | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| `LLM_MODEL_NAME` | Yes | Model identifier | `qwen-plus` |
+| `ZEP_API_KEY` | Yes | Zep Cloud API key | `z_xxxxxx` |
+| `LLM_BOOST_API_KEY` | No | Accelerated LLM API key | `sk-xxxxxx` |
+| `LLM_BOOST_BASE_URL` | No | Accelerated endpoint URL | Custom URL |
+| `LLM_BOOST_MODEL_NAME` | No | Accelerated model name | Custom model |
+
+## Testing Your Configuration
+
+After setup, test your configuration by starting the backend:
+
+```bash
+npm run backend
+```
+
+The backend should start successfully at `http://localhost:5001`. Check the logs for any configuration errors.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Upload Seed Data" icon="upload" href="/guides/upload-seed-data">
+    Learn how to upload documents and generate ontology definitions
+  </Card>
+  <Card title="Build Knowledge Graph" icon="diagram-project" href="/guides/build-knowledge-graph">
+    Construct your knowledge graph from uploaded documents
+  </Card>
+</CardGroup>

@@ -1,0 +1,332 @@
+---
+title: "Story Prediction"
+description: "Predict narrative outcomes, character development, and creative storytelling using multi-agent character simulation"
+---
+
+## Overview
+
+Story prediction with MiroFish brings a unique approach to narrative exploration and creative writing. By simulating characters as independent agents with consistent personalities, memories, and motivations, MiroFish can predict how stories might unfold, complete unfinished narratives, or explore alternative plot directions.
+
+<Note>
+This use case is perfect for writers, literary researchers, game designers, and creative professionals exploring narrative possibilities.
+</Note>
+
+## Real-World Example: Dream of the Red Chamber
+
+One of MiroFish's most fascinating demonstrations involves predicting the lost ending of *Dream of the Red Chamber* (红楼梦), one of China's greatest classical novels. The original novel's final 40 chapters were lost, and this simulation showcases how MiroFish can continue complex narratives.
+
+<Card title="Watch the Full Demo" icon="play" href="https://www.bilibili.com/video/BV1cPk3BBExq">
+  See how MiroFish deeply predicts the lost ending based on hundreds of thousands of words from the first 80 chapters
+</Card>
+
+### What Makes This Remarkable
+
+- **Massive source material**: The simulation was seeded with the complete text of the first 80 chapters (200,000+ Chinese characters)
+- **Complex character web**: Dozens of interconnected characters with intricate relationships
+- **Long-term consistency**: Character behaviors remained true to their established personalities
+- **Narrative coherence**: The predicted ending maintained the novel's themes and style
+
+## How It Works
+
+<Steps>
+  <Step title="Upload Story Material">
+    Provide your narrative source material:
+    - Existing chapters or story text
+    - Character descriptions and backgrounds
+    - Plot summaries and timelines
+    - World-building documents
+    - Thematic notes and guidelines
+    
+    MiroFish can process novels, scripts, game narratives, or any written story content.
+  </Step>
+  
+  <Step title="Extract Story Elements">
+    MiroFish analyzes the text to identify:
+    - **Characters**: Names, personalities, relationships, motivations
+    - **Plot points**: Key events, conflicts, resolutions
+    - **Settings**: Locations, time periods, social contexts
+    - **Themes**: Underlying messages and narrative arcs
+    - **Relationships**: Character dynamics and social networks
+  </Step>
+  
+  <Step title="Generate Character Agents">
+    Each major character becomes an autonomous agent with:
+    
+    **Personality Traits**
+    - Consistent behavior patterns from source material
+    - Emotional tendencies and reactions
+    - Speech patterns and vocabulary
+    
+    **Memory System**
+    - Recall of past events and interactions
+    - Relationship history with other characters
+    - Personal goals and motivations
+    
+    **Agency & Decision Making**
+    - Make choices based on their personality
+    - React to situations authentically
+    - Pursue their objectives
+  </Step>
+  
+  <Step title="Simulate Narrative Progression">
+    Characters interact and drive the story forward:
+    - Have conversations and confrontations
+    - Make decisions at plot crossroads
+    - React to events and other characters
+    - Form new relationships and alliances
+    - Pursue their goals and face obstacles
+    
+    The narrative emerges organically from character interactions rather than being predetermined.
+  </Step>
+  
+  <Step title="Generate Story Continuation">
+    The ReportAgent synthesizes simulation results into:
+    - Coherent narrative prose
+    - Character development arcs
+    - Plot resolution proposals
+    - Thematic analysis
+    - Alternative scenario explorations
+  </Step>
+</Steps>
+
+## Use Cases for Story Prediction
+
+<CardGroup cols={2}>
+  <Card title="Complete Unfinished Works" icon="book">
+    Predict how incomplete novels, series, or scripts might conclude based on existing material
+  </Card>
+  
+  <Card title="Explore Alternatives" icon="code-branch">
+    Ask "what if" questions about your story: what if two characters met earlier? What if a key event never happened?
+  </Card>
+  
+  <Card title="Character Testing" icon="user">
+    Test how new characters would fit into existing narratives and interact with established characters
+  </Card>
+  
+  <Card title="Plot Debugging" icon="bug">
+    Identify plot holes or inconsistent character behavior before publishing
+  </Card>
+  
+  <Card title="Writer's Block Solutions" icon="lightbulb">
+    Generate ideas for how to continue a story when you're stuck
+  </Card>
+  
+  <Card title="Adaptation Exploration" icon="film">
+    Preview how a story might work in a different medium or setting
+  </Card>
+</CardGroup>
+
+## Setup Example
+
+```python
+# Example configuration for story prediction
+simulation_config = {
+    "scenario_type": "narrative_prediction",
+    "source_material": "novel_chapters_1_to_80.txt",
+    "prediction_goal": "Generate possible ending for chapters 81-120",
+    "character_focus": [
+        "protagonist",
+        "main_antagonist",
+        "key_supporting_characters"
+    ],
+    "simulation_rounds": 100,
+    "narrative_constraints": {
+        "maintain_tone": true,
+        "respect_character_arcs": true,
+        "resolve_plot_threads": ["mystery_subplot", "romance_arc"]
+    },
+    "interaction_style": "dialogue_and_action"
+}
+```
+
+## Key Insights You Can Gain
+
+<CardGroup cols={2}>
+  <Card title="Character Consistency" icon="user-check">
+    Verify that character behavior remains authentic to their established personality
+  </Card>
+  
+  <Card title="Narrative Coherence" icon="book-open">
+    Ensure plot developments feel natural and earned rather than forced
+  </Card>
+  
+  <Card title="Theme Exploration" icon="compass">
+    Discover deeper thematic resonances through character interactions
+  </Card>
+  
+  <Card title="Reader Reactions" icon="comments">
+    Predict how audiences might respond to different narrative directions
+  </Card>
+  
+  <Card title="Plot Possibilities" icon="diagram-project">
+    Explore multiple potential story paths before committing to one
+  </Card>
+  
+  <Card title="Character Chemistry" icon="heart">
+    Test relationship dynamics between characters
+  </Card>
+</CardGroup>
+
+## Advanced Features
+
+### Multi-Path Exploration
+
+Generate multiple alternative story continuations:
+- Optimistic vs. tragic endings
+- Different character choices at key moments
+- Various plot twist possibilities
+- Alternate character pairings and alliances
+
+### Character Interviews
+
+Interact directly with character agents to:
+- Understand their motivations and thoughts
+- Ask about their perspective on events
+- Test how they'd react to hypothetical situations
+- Explore character depth beyond the written narrative
+
+### Thematic Analysis
+
+The ReportAgent can identify:
+- Recurring motifs and symbols
+- Character arc patterns
+- Thematic development across the narrative
+- How different endings serve different themes
+
+### Style Preservation
+
+MiroFish maintains narrative style:
+- Matching vocabulary and prose rhythm
+- Preserving narrative voice
+- Maintaining genre conventions
+- Respecting cultural and historical context
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Provide Rich Source Material">
+    The more text you provide, the better MiroFish understands character personalities and narrative style. For novel-length predictions, include at least several chapters or 20,000+ words.
+  </Accordion>
+  
+  <Accordion title="Define Clear Prediction Goals">
+    Be specific about what you want to explore: "How does the romance subplot resolve?" works better than "What happens next?"
+  </Accordion>
+  
+  <Accordion title="Start with Fewer Rounds">
+    For initial testing, use 40-60 simulation rounds. Complex narratives with many characters may benefit from 100+ rounds but consume more resources.
+  </Accordion>
+  
+  <Accordion title="Interview Key Characters">
+    Use the agent interview feature to understand character motivations that drive plot developments. This reveals the "why" behind the "what."
+  </Accordion>
+  
+  <Accordion title="Iterate and Refine">
+    Run multiple simulations with different parameters to explore various narrative possibilities. Story prediction is an iterative creative process.
+  </Accordion>
+</AccordionGroup>
+
+## Typical Workflow for Writers
+
+1. **Write your story** up to the point where you want prediction assistance
+2. **Upload your manuscript** including character backgrounds and plot notes
+3. **Define your question** (e.g., "How could this trilogy end?")
+4. **Configure characters** focusing on those most relevant to the prediction
+5. **Run simulation** allowing characters to interact and drive plot forward
+6. **Review generated narrative** from the ReportAgent
+7. **Interview characters** to understand their thought processes
+8. **Test alternatives** by running simulations with different parameters
+9. **Synthesize insights** into your actual writing
+10. **Iterate** as you develop your story further
+
+## Literary Analysis Applications
+
+### Academic Research
+
+Use MiroFish for literary scholarship:
+- Analyze how lost or fragmentary works might have concluded
+- Study character consistency across long narratives
+- Explore how different authorial choices might have changed classic works
+- Test theories about character motivations and plot development
+
+### Comparative Literature
+
+Generate variations to study:
+- How the same characters might behave in different cultural contexts
+- Alternative genre treatments of the same story
+- The impact of different narrative structures
+
+### Teaching and Education
+
+Engage students by:
+- Predicting how characters might behave in new scenarios
+- Exploring alternative endings to classic literature
+- Understanding character development through simulation
+- Analyzing the relationship between character traits and plot outcomes
+
+## Game Design and Interactive Narratives
+
+MiroFish is particularly powerful for:
+- **Branching storylines**: Generate multiple paths for player choices
+- **NPC behavior**: Design consistent non-player character interactions
+- **Quest design**: Test how characters react to player actions
+- **Dynamic storytelling**: Create narratives that adapt to player decisions
+
+## Limitations and Creative Considerations
+
+<Warning>
+MiroFish is a creative tool, not a replacement for human creativity:
+- Predictions are possibilities, not prescriptions
+- The best results come from combining AI suggestions with human judgment
+- Character agents are based on LLM understanding of narrative patterns
+- Original creative vision should guide how you use simulation results
+- Use predictions as inspiration, not as finished prose
+</Warning>
+
+## Inspirational Possibilities
+
+<CardGroup cols={3}>
+  <Card title="Fan Fiction" icon="heart">
+    Explore canonical characters in new scenarios
+  </Card>
+  
+  <Card title="Screenplay Development" icon="film">
+    Test different plot structures before writing
+  </Card>
+  
+  <Card title="Serial Fiction" icon="book-open">
+    Plan future installments while maintaining consistency
+  </Card>
+  
+  <Card title="Character Backstories" icon="user">
+    Develop rich character histories through simulation
+  </Card>
+  
+  <Card title="World Building" icon="globe">
+    Explore how your world's rules affect character behavior
+  </Card>
+  
+  <Card title="Collaborative Writing" icon="users">
+    Use simulations as a collaborative brainstorming partner
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Get Started" icon="rocket" href="/quickstart">
+    Install MiroFish and run your first story prediction
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api/introduction">
+    Integrate story prediction into your writing tools
+  </Card>
+  
+  <Card title="Agent Interaction" icon="comments" href="/guides/interact-with-agents">
+    Learn how to interview character agents
+  </Card>
+  
+  <Card title="Report Generation" icon="file-chart-column" href="/guides/generate-reports">
+    Understand how narrative reports are created
+  </Card>
+</CardGroup>

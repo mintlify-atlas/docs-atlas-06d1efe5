@@ -1,0 +1,433 @@
+---
+title: Monitor Simulation
+description: Track real-time simulation status, progress, and agent activities
+---
+
+## Get Run Status
+
+Retrieve the current status and progress of a running simulation.
+
+<CodeGroup>
+```bash GET /api/simulation/{simulation_id}/run-status
+curl "http://localhost:5000/api/simulation/sim_abc123/run-status"
+```
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Simulation runtime status
+  
+  <ResponseField name="data.simulation_id" type="string">
+    Simulation ID
+  </ResponseField>
+  
+  <ResponseField name="data.runner_status" type="string">
+    Current status: `idle`, `running`, `stopped`, `completed`, `failed`
+  </ResponseField>
+  
+  <ResponseField name="data.current_round" type="integer">
+    Current simulation round
+  </ResponseField>
+  
+  <ResponseField name="data.total_rounds" type="integer">
+    Total planned rounds
+  </ResponseField>
+  
+  <ResponseField name="data.progress_percent" type="number">
+    Completion percentage (0-100)
+  </ResponseField>
+  
+  <ResponseField name="data.simulated_hours" type="number">
+    Simulated time elapsed in hours
+  </ResponseField>
+  
+  <ResponseField name="data.total_simulation_hours" type="number">
+    Total simulation duration in hours
+  </ResponseField>
+  
+  <ResponseField name="data.twitter_running" type="boolean">
+    Whether Twitter simulation is active
+  </ResponseField>
+  
+  <ResponseField name="data.reddit_running" type="boolean">
+    Whether Reddit simulation is active
+  </ResponseField>
+  
+  <ResponseField name="data.twitter_actions_count" type="integer">
+    Number of Twitter actions executed
+  </ResponseField>
+  
+  <ResponseField name="data.reddit_actions_count" type="integer">
+    Number of Reddit actions executed
+  </ResponseField>
+  
+  <ResponseField name="data.total_actions_count" type="integer">
+    Total actions across all platforms
+  </ResponseField>
+  
+  <ResponseField name="data.started_at" type="string">
+    ISO timestamp when simulation started
+  </ResponseField>
+  
+  <ResponseField name="data.updated_at" type="string">
+    ISO timestamp of last status update
+  </ResponseField>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_abc123",
+    "runner_status": "running",
+    "current_round": 5,
+    "total_rounds": 144,
+    "progress_percent": 3.5,
+    "simulated_hours": 2,
+    "total_simulation_hours": 72,
+    "twitter_running": true,
+    "reddit_running": true,
+    "twitter_actions_count": 150,
+    "reddit_actions_count": 200,
+    "total_actions_count": 350,
+    "started_at": "2025-12-01T10:00:00",
+    "updated_at": "2025-12-01T10:30:00"
+  }
+}
+```
+
+---
+
+## Get Detailed Status
+
+Retrieve detailed simulation status including all agent actions.
+
+<CodeGroup>
+```bash GET /api/simulation/{simulation_id}/run-status/detail
+curl "http://localhost:5000/api/simulation/sim_abc123/run-status/detail?platform=twitter"
+```
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="platform" type="string">
+  Filter actions by platform (`twitter` or `reddit`)
+  
+  If omitted, returns actions from both platforms.
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Extends basic run status with action details
+  
+  <ResponseField name="data.all_actions" type="array">
+    All actions from all rounds
+    
+    <ResponseField name="data.all_actions[].round_num" type="integer">
+      Round number when action occurred
+    </ResponseField>
+    
+    <ResponseField name="data.all_actions[].timestamp" type="string">
+      ISO timestamp
+    </ResponseField>
+    
+    <ResponseField name="data.all_actions[].platform" type="string">
+      Platform: `twitter` or `reddit`
+    </ResponseField>
+    
+    <ResponseField name="data.all_actions[].agent_id" type="integer">
+      Agent ID who performed the action
+    </ResponseField>
+    
+    <ResponseField name="data.all_actions[].agent_name" type="string">
+      Agent display name
+    </ResponseField>
+    
+    <ResponseField name="data.all_actions[].action_type" type="string">
+      Type of action (e.g., `CREATE_POST`, `COMMENT`, `LIKE`, `RETWEET`)
+    </ResponseField>
+    
+    <ResponseField name="data.all_actions[].action_args" type="object">
+      Action parameters (e.g., content, target post ID)
+    </ResponseField>
+    
+    <ResponseField name="data.all_actions[].result" type="any">
+      Action result (e.g., created post ID)
+    </ResponseField>
+    
+    <ResponseField name="data.all_actions[].success" type="boolean">
+      Whether the action succeeded
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="data.twitter_actions" type="array">
+    All Twitter actions (same structure as `all_actions`)
+  </ResponseField>
+  
+  <ResponseField name="data.reddit_actions" type="array">
+    All Reddit actions (same structure as `all_actions`)
+  </ResponseField>
+  
+  <ResponseField name="data.recent_actions" type="array">
+    Actions from the current round only
+  </ResponseField>
+  
+  <ResponseField name="data.rounds_count" type="integer">
+    Number of completed rounds
+  </ResponseField>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_abc123",
+    "runner_status": "running",
+    "current_round": 5,
+    "all_actions": [
+      {
+        "round_num": 5,
+        "timestamp": "2025-12-01T10:30:00",
+        "platform": "twitter",
+        "agent_id": 3,
+        "agent_name": "Zhang Wei",
+        "action_type": "CREATE_POST",
+        "action_args": {
+          "content": "Excited about the new AI course at WHU! #AI #Education"
+        },
+        "result": {"post_id": 12345},
+        "success": true
+      }
+    ],
+    "twitter_actions": [ /* ... */ ],
+    "reddit_actions": [ /* ... */ ],
+    "recent_actions": [ /* ... */ ],
+    "rounds_count": 5
+  }
+}
+```
+
+---
+
+## Get Action History
+
+Retrieve paginated action history with filtering options.
+
+<CodeGroup>
+```bash GET /api/simulation/{simulation_id}/actions
+curl "http://localhost:5000/api/simulation/sim_abc123/actions?limit=50&platform=reddit&agent_id=0"
+```
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="limit" type="integer" default="100">
+  Number of actions to return
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of actions to skip (for pagination)
+</ParamField>
+
+<ParamField query="platform" type="string">
+  Filter by platform (`twitter` or `reddit`)
+</ParamField>
+
+<ParamField query="agent_id" type="integer">
+  Filter by specific agent ID
+</ParamField>
+
+<ParamField query="round_num" type="integer">
+  Filter by specific round number
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="data.count" type="integer">
+    Number of actions returned
+  </ResponseField>
+  
+  <ResponseField name="data.actions" type="array">
+    Array of action objects (same structure as detailed status)
+  </ResponseField>
+</ResponseField>
+
+---
+
+## Get Timeline
+
+Retrieve round-by-round timeline summary for visualization.
+
+<CodeGroup>
+```bash GET /api/simulation/{simulation_id}/timeline
+curl "http://localhost:5000/api/simulation/sim_abc123/timeline?start_round=0&end_round=10"
+```
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="start_round" type="integer" default="0">
+  Starting round number
+</ParamField>
+
+<ParamField query="end_round" type="integer">
+  Ending round number (omit for all rounds)
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="data.rounds_count" type="integer">
+    Number of rounds in timeline
+  </ResponseField>
+  
+  <ResponseField name="data.timeline" type="array">
+    Array of round summaries with action counts and key metrics
+  </ResponseField>
+</ResponseField>
+
+---
+
+## Get Agent Statistics
+
+Retrieve per-agent activity statistics and rankings.
+
+<CodeGroup>
+```bash GET /api/simulation/{simulation_id}/agent-stats
+curl "http://localhost:5000/api/simulation/sim_abc123/agent-stats"
+```
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="data.agents_count" type="integer">
+    Number of agents
+  </ResponseField>
+  
+  <ResponseField name="data.stats" type="array">
+    Per-agent statistics including action counts, activity level, and engagement metrics
+  </ResponseField>
+</ResponseField>
+
+---
+
+## Get Database Posts
+
+Query posts directly from the simulation database.
+
+<CodeGroup>
+```bash GET /api/simulation/{simulation_id}/posts
+curl "http://localhost:5000/api/simulation/sim_abc123/posts?platform=reddit&limit=50"
+```
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="platform" type="string" default="reddit">
+  Platform database to query (`twitter` or `reddit`)
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Number of posts to return
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of posts to skip
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="data.platform" type="string">
+    Platform name
+  </ResponseField>
+  
+  <ResponseField name="data.total" type="integer">
+    Total number of posts in database
+  </ResponseField>
+  
+  <ResponseField name="data.count" type="integer">
+    Number of posts returned
+  </ResponseField>
+  
+  <ResponseField name="data.posts" type="array">
+    Array of post objects from SQLite database
+  </ResponseField>
+</ResponseField>
+
+## Usage Notes
+
+- Poll `/run-status` every 2-5 seconds for real-time progress updates
+- Use `/run-status/detail` sparingly as it returns large payloads
+- The `/actions` endpoint supports pagination for large simulations
+- Database queries (`/posts`, `/comments`) access SQLite directly
+- All timestamps are in ISO 8601 format
+- Action counts update in real-time as simulation progresses

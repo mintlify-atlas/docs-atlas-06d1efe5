@@ -1,0 +1,174 @@
+---
+title: API Introduction
+description: Overview of the MiroFish REST API for social simulation and knowledge graph analysis
+---
+
+## Overview
+
+The MiroFish API is a RESTful backend service designed for creating knowledge graphs from documents and running social media simulations. The API enables you to upload documents, generate ontologies, build knowledge graphs, simulate social interactions, and generate analytical reports.
+
+<Card title="API Base URL" icon="globe">
+  ```
+  http://localhost:5001
+  ```
+  
+  All API endpoints are prefixed with `/api/`
+</Card>
+
+## Architecture
+
+MiroFish follows a REST architecture with the following characteristics:
+
+- **Stateless Communication**: Each request contains all necessary information
+- **Resource-Based**: URLs represent resources (projects, graphs, simulations, reports)
+- **Standard HTTP Methods**: GET, POST, DELETE for different operations
+- **JSON Payloads**: All request and response bodies use JSON format
+
+## Core API Modules
+
+The API is organized into three main modules:
+
+<CardGroup cols={3}>
+  <Card title="Graph API" icon="diagram-project" href="/api/graph/overview">
+    `/api/graph/*`
+    
+    Document upload, ontology generation, and knowledge graph construction
+  </Card>
+  
+  <Card title="Simulation API" icon="users" href="/api/simulation/overview">
+    `/api/simulation/*`
+    
+    Entity extraction, agent profile generation, and OASIS simulation execution
+  </Card>
+  
+  <Card title="Report API" icon="file-chart-line" href="/api/report/overview">
+    `/api/report/*`
+    
+    Automated report generation and interactive analysis chat
+  </Card>
+</CardGroup>
+
+## Response Format
+
+All API responses follow a consistent structure:
+
+<CodeGroup>
+```json Success Response
+{
+  "success": true,
+  "data": {
+    // Response payload varies by endpoint
+  }
+}
+```
+
+```json Error Response
+{
+  "success": false,
+  "error": "Error message describing what went wrong",
+  "traceback": "Detailed stack trace (only in debug mode)"
+}
+```
+
+```json Task Response
+{
+  "success": true,
+  "data": {
+    "task_id": "task_abc123",
+    "status": "processing",
+    "progress": 45,
+    "message": "Building knowledge graph..."
+  }
+}
+```
+</CodeGroup>
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Indicates if the request was successful |
+| `data` | object | Contains the response payload (on success) |
+| `error` | string | Error message (on failure) |
+| `traceback` | string | Detailed error trace for debugging |
+
+## Asynchronous Operations
+
+Several API operations are long-running and execute asynchronously:
+
+- **Graph Construction**: `/api/graph/build`
+- **Simulation Preparation**: `/api/simulation/prepare`
+- **Report Generation**: `/api/report/generate`
+
+These endpoints immediately return a `task_id` that you can use to poll for progress:
+
+```json Task Polling Pattern
+// 1. Start async operation
+POST /api/graph/build
+→ Returns: {"success": true, "data": {"task_id": "task_abc123"}}
+
+// 2. Poll for status
+GET /api/graph/task/task_abc123
+→ Returns: {"success": true, "data": {"status": "processing", "progress": 45}}
+
+// 3. Check completion
+GET /api/graph/task/task_abc123
+→ Returns: {"success": true, "data": {"status": "completed", "progress": 100, "result": {...}}}
+```
+
+<Note>
+  Task status values: `pending`, `processing`, `completed`, `failed`
+</Note>
+
+## Health Check
+
+Verify the API is running:
+
+```bash
+GET http://localhost:5001/health
+```
+
+Response:
+```json
+{
+  "status": "ok",
+  "service": "MiroFish Backend"
+}
+```
+
+## CORS Support
+
+CORS is enabled for all `/api/*` endpoints with:
+
+- **Allowed Origins**: `*` (all origins)
+- **Allowed Methods**: GET, POST, DELETE, OPTIONS
+- **Allowed Headers**: Content-Type, Authorization
+
+## Configuration
+
+The API behavior is controlled through environment variables in `.env`:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `FLASK_DEBUG` | `True` | Enable debug mode |
+| `LLM_API_KEY` | - | OpenAI-compatible API key |
+| `LLM_BASE_URL` | `https://api.openai.com/v1` | LLM service endpoint |
+| `LLM_MODEL_NAME` | `gpt-4o-mini` | LLM model identifier |
+| `ZEP_API_KEY` | - | Zep knowledge graph API key |
+| `MAX_CONTENT_LENGTH` | `50MB` | Maximum upload file size |
+
+<Note>
+  Both `LLM_API_KEY` and `ZEP_API_KEY` are required for the API to function properly.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/api/authentication">
+    Learn about API authentication and security
+  </Card>
+  
+  <Card title="Graph API" icon="diagram-project" href="/api/graph/overview">
+    Start building knowledge graphs from documents
+  </Card>
+</CardGroup>

@@ -1,0 +1,444 @@
+---
+title: "Policy Testing"
+description: "Test policy impacts, regulatory changes, and strategic decisions in a risk-free simulated environment"
+---
+
+## Overview
+
+Policy testing with MiroFish allows decision-makers to rehearse the future before committing to real-world changes. By simulating how diverse populations of agents respond to new policies, regulations, or strategic decisions, you can identify unintended consequences, optimize implementation strategies, and prepare for public reactions—all without real-world risk.
+
+<Note>
+This use case is essential for government agencies, corporate strategy teams, non-profits, and any organization making decisions that affect communities.
+</Note>
+
+## Why Simulate Policy Impact?
+
+Traditional policy analysis relies on historical data and theoretical models. MiroFish adds a crucial dimension:
+
+<CardGroup cols={2}>
+  <Card title="Behavioral Realism" icon="users">
+    Model how real people with diverse viewpoints and interests will actually respond, not how they should respond in theory
+  </Card>
+  
+  <Card title="Emergence Detection" icon="wave-pulse">
+    Discover unexpected consequences that emerge from the interaction of many individual responses
+  </Card>
+  
+  <Card title="Risk-Free Testing" icon="shield-check">
+    Experiment with bold ideas without risking public backlash or implementation failures
+  </Card>
+  
+  <Card title="Stakeholder Insight" icon="comments">
+    Understand how different demographic and interest groups will perceive and react to changes
+  </Card>
+</CardGroup>
+
+## How It Works
+
+<Steps>
+  <Step title="Define Policy Scenario">
+    Upload comprehensive background information:
+    - Current policy or baseline conditions
+    - Proposed policy changes or new initiatives
+    - Relevant demographic and socioeconomic data
+    - Historical precedents and case studies
+    - Stakeholder positions and interests
+    - Related news, reports, and analysis
+  </Step>
+  
+  <Step title="Build Context Graph">
+    MiroFish constructs a knowledge graph capturing:
+    - **Stakeholders**: Affected populations, interest groups, institutions
+    - **Relationships**: Power dynamics, dependencies, alliances
+    - **Resources**: Economic factors, infrastructure, information flows
+    - **Context**: Historical background, cultural factors, existing tensions
+    - **Policy Details**: Specifics of the proposed change
+  </Step>
+  
+  <Step title="Generate Diverse Agents">
+    Create a representative population of agents:
+    
+    **Demographic Diversity**
+    - Age groups and generational differences
+    - Socioeconomic backgrounds
+    - Geographic locations (urban/suburban/rural)
+    - Educational levels
+    
+    **Interest Group Representation**
+    - Direct beneficiaries of the policy
+    - Those negatively impacted
+    - Industry stakeholders
+    - Advocacy organizations
+    - Government officials and implementers
+    
+    **Behavioral Variation**
+    - Political leanings and ideologies
+    - Risk tolerance and change receptivity
+    - Information sources and media diets
+    - Social influence and network position
+  </Step>
+  
+  <Step title="Simulate Policy Implementation">
+    Agents interact as the policy unfolds:
+    - React to policy announcement
+    - Discuss with peers and on social platforms
+    - Adjust behaviors in response to the policy
+    - Form coalitions and organize responses
+    - Interact with institutions and authorities
+    - Share experiences of policy impact
+  </Step>
+  
+  <Step title="Analyze Outcomes">
+    The ReportAgent evaluates:
+    - Overall public acceptance vs. resistance
+    - Compliance rates and implementation challenges
+    - Unintended consequences and side effects
+    - Demographic variation in responses
+    - Optimal communication and rollout strategies
+    - Potential flashpoints and controversies
+  </Step>
+</Steps>
+
+## Policy Domains
+
+### Public Policy
+
+<CardGroup cols={2}>
+  <Card title="Education Reform" icon="graduation-cap">
+    Test curriculum changes, school policies, or higher education initiatives before implementation
+  </Card>
+  
+  <Card title="Healthcare Policy" icon="heart-pulse">
+    Model public response to healthcare reforms, vaccination campaigns, or insurance changes
+  </Card>
+  
+  <Card title="Urban Planning" icon="city">
+    Simulate reactions to zoning changes, transit projects, or development plans
+  </Card>
+  
+  <Card title="Environmental Regulation" icon="leaf">
+    Predict responses to carbon taxes, conservation policies, or sustainability initiatives
+  </Card>
+</CardGroup>
+
+### Corporate Strategy
+
+<CardGroup cols={2}>
+  <Card title="Product Launches" icon="rocket">
+    Test market reception before major announcements
+  </Card>
+  
+  <Card title="Organizational Change" icon="building">
+    Model employee reactions to restructuring or new policies
+  </Card>
+  
+  <Card title="Pricing Strategies" icon="dollar-sign">
+    Predict customer and competitor responses to pricing changes
+  </Card>
+  
+  <Card title="PR Campaigns" icon="bullhorn">
+    Test messaging strategies and crisis communications
+  </Card>
+</CardGroup>
+
+### Social Initiatives
+
+<CardGroup cols={2}>
+  <Card title="Community Programs" icon="hands-holding-heart">
+    Design interventions with better understanding of community needs
+  </Card>
+  
+  <Card title="Advocacy Campaigns" icon="megaphone">
+    Optimize messaging and strategy for social movements
+  </Card>
+</CardGroup>
+
+## Setup Example
+
+```python
+# Example configuration for policy testing
+simulation_config = {
+    "scenario_type": "policy_impact",
+    "policy_domain": "education",
+    "baseline_context": "current_university_policy.pdf",
+    "proposed_change": "new_student_conduct_policy.pdf",
+    "agent_distribution": {
+        "students": 120,
+        "faculty": 30,
+        "administrators": 15,
+        "parents": 25,
+        "alumni": 10
+    },
+    "simulation_phases": [
+        {
+            "phase": "announcement",
+            "rounds": 20,
+            "description": "Initial policy announcement"
+        },
+        {
+            "phase": "feedback_period",
+            "rounds": 30,
+            "description": "Public comment and discussion"
+        },
+        {
+            "phase": "implementation",
+            "rounds": 30,
+            "description": "Policy goes into effect"
+        }
+    ],
+    "analysis_focus": [
+        "acceptance_rate",
+        "key_objections",
+        "unintended_consequences",
+        "optimal_rollout_strategy"
+    ]
+}
+```
+
+## Key Insights You Can Gain
+
+<CardGroup cols={2}>
+  <Card title="Acceptance Forecasts" icon="thumbs-up">
+    Predict overall support, opposition, and indifference levels across populations
+  </Card>
+  
+  <Card title="Objection Mapping" icon="triangle-exclamation">
+    Identify the main concerns and objections before they become real controversies
+  </Card>
+  
+  <Card title="Compliance Prediction" icon="clipboard-check">
+    Forecast actual compliance vs. resistance or creative workarounds
+  </Card>
+  
+  <Card title="Communication Strategy" icon="comments">
+    Discover which messages resonate with different stakeholder groups
+  </Card>
+  
+  <Card title="Implementation Barriers" icon="road-barrier">
+    Identify practical obstacles to implementation before they arise
+  </Card>
+  
+  <Card title="Coalition Dynamics" icon="diagram-project">
+    Understand which groups will ally and which will clash
+  </Card>
+  
+  <Card title="Unintended Consequences" icon="bolt">
+    Discover side effects and second-order impacts
+  </Card>
+  
+  <Card title="Optimal Timing" icon="clock">
+    Determine the best rollout schedule and phasing
+  </Card>
+</CardGroup>
+
+## Advanced Features
+
+### Multi-Phase Simulation
+
+Model policy implementation across distinct phases:
+1. **Announcement**: Initial public reaction
+2. **Consultation**: Feedback and revision period
+3. **Preparation**: Pre-implementation adjustments
+4. **Launch**: Initial rollout
+5. **Maturation**: Long-term adoption and adaptation
+
+### Scenario Comparison
+
+Run parallel simulations to compare:
+- Different policy formulations
+- Various communication strategies
+- Alternative implementation timelines
+- Different levels of stakeholder engagement
+
+### Dynamic Policy Adjustment
+
+Test mid-course corrections:
+- Inject policy modifications during simulation
+- Test response to clarifications or amendments
+- Model the impact of addressing concerns
+
+### Cross-Cultural Modeling
+
+Simulate the same policy in different contexts:
+- Geographic variations (different regions or cities)
+- Cultural differences (international policy transfer)
+- Demographic variations (different age groups or communities)
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Represent All Stakeholders">
+    Ensure your agent distribution includes everyone significantly affected by the policy, not just the most vocal groups. Silent majorities can surprise you.
+  </Accordion>
+  
+  <Accordion title="Use Realistic Baseline Data">
+    Ground your simulation in actual demographic data, opinion polls, and social science research about your target population.
+  </Accordion>
+  
+  <Accordion title="Define Success Criteria Upfront">
+    Be clear about what constitutes successful policy adoption. Is it 60% approval? 80% compliance? No major controversies?
+  </Accordion>
+  
+  <Accordion title="Model Implementation Reality">
+    Include the practical challenges of implementation (resource constraints, institutional capacity, etc.), not just the policy on paper.
+  </Accordion>
+  
+  <Accordion title="Interview Diverse Agents">
+    Use the agent interview feature to understand perspectives from different demographic and interest groups, especially those you might not personally relate to.
+  </Accordion>
+  
+  <Accordion title="Run Sensitivity Analysis">
+    Test how robust your policy is by varying assumptions and parameters. Policies that succeed in many scenarios are more resilient.
+  </Accordion>
+</AccordionGroup>
+
+## Typical Workflow
+
+1. **Identify the policy decision** requiring analysis
+2. **Gather context materials**: Current policies, stakeholder analysis, relevant data
+3. **Define policy alternatives** to compare
+4. **Map stakeholder groups** and their likely positions
+5. **Configure agent distribution** to match real population
+6. **Run baseline simulation** with current policy
+7. **Simulate proposed policy** with same agent population
+8. **Compare outcomes** between baseline and proposal
+9. **Test variations** to optimize the policy
+10. **Interview agents** to understand objections and support
+11. **Generate recommendations** for implementation strategy
+12. **Share findings** with decision-makers
+
+## Real-World Applications
+
+### Government Decision-Making
+
+**Use MiroFish before:**
+- Announcing controversial policies
+- Making budget allocation decisions
+- Implementing regulatory changes
+- Launching public health campaigns
+- Reforming institutional procedures
+
+**Benefits:**
+- Reduce political backlash risk
+- Optimize public communication
+- Identify needed support programs
+- Prepare for implementation challenges
+
+### Corporate Strategy
+
+**Use MiroFish before:**
+- Organizational restructuring
+- Major product changes
+- Policy shifts (remote work, benefits, etc.)
+- Crisis response decisions
+- Market positioning changes
+
+**Benefits:**
+- Maintain employee morale
+- Minimize customer churn
+- Anticipate competitor responses
+- Prepare stakeholder communications
+
+### Academic and Research Institutions
+
+**Use MiroFish for:**
+- Campus policy changes
+- Curriculum reforms
+- Resource allocation decisions
+- Community engagement initiatives
+
+**Benefits:**
+- Build consensus before implementation
+- Address concerns proactively
+- Optimize change management
+
+## Success Metrics
+
+Measure simulation value by:
+
+<CardGroup cols={2}>
+  <Card title="Prediction Accuracy" icon="bullseye">
+    How well did simulated reactions match real outcomes?
+  </Card>
+  
+  <Card title="Issue Prevention" icon="shield">
+    How many problems were identified and avoided?
+  </Card>
+  
+  <Card title="Implementation Success" icon="chart-line">
+    Did the policy achieve its objectives?
+  </Card>
+  
+  <Card title="Stakeholder Satisfaction" icon="smile">
+    Were affected groups more accepting due to refinements?
+  </Card>
+</CardGroup>
+
+## Ethical Considerations
+
+<Warning>
+Policy simulation is powerful but must be used responsibly:
+
+- **Transparency**: Be clear when decisions were informed by simulation
+- **Inclusivity**: Ensure agent populations represent all affected groups, especially marginalized voices
+- **Limitations**: Simulations are models, not guarantees. Always gather real stakeholder input too
+- **Bias awareness**: LLMs may reflect societal biases. Validate findings against real data
+- **Privacy**: Avoid including personal data in seed materials
+- **Democratic values**: Use simulations to improve policy, not to manipulate public opinion
+</Warning>
+
+## Integration with Policy Processes
+
+### Early Stage: Policy Design
+
+Use simulations during policy formulation to:
+- Test initial ideas quickly
+- Identify the most promising approaches
+- Understand implementation requirements
+
+### Middle Stage: Stakeholder Consultation
+
+Use simulations alongside real engagement to:
+- Prepare for stakeholder meetings
+- Anticipate concerns and objections
+- Refine communication materials
+
+### Late Stage: Implementation Planning
+
+Use simulations before launch to:
+- Finalize rollout strategy
+- Prepare response to likely reactions
+- Train staff on expected scenarios
+
+### Post-Implementation: Evaluation
+
+Compare simulation predictions to actual outcomes to:
+- Validate simulation methodology
+- Improve future predictions
+- Learn about unexpected factors
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Get Started" icon="rocket" href="/quickstart">
+    Install MiroFish and run your first policy simulation
+  </Card>
+  
+  <Card title="Public Opinion Analysis" icon="users" href="/use-cases/public-opinion-analysis">
+    Learn how to model public reactions and sentiment
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api/introduction">
+    Integrate policy testing into your decision workflows
+  </Card>
+  
+  <Card title="Generate Reports" icon="file-chart-column" href="/guides/generate-reports">
+    Learn how to extract actionable insights from simulations
+  </Card>
+</CardGroup>
+
+---
+
+<Note>
+**From Macro to Micro**: MiroFish serves decision-makers as a zero-risk rehearsal laboratory where policies can be tested before real-world implementation. Make better decisions with better predictions.
+</Note>

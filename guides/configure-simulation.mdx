@@ -1,0 +1,371 @@
+---
+title: 'Configure Simulation'
+description: 'Create and configure a MiroFish simulation with intelligent agent profiles and platform settings'
+---
+
+## Overview
+
+After building your knowledge graph, you can create a simulation. MiroFish simulations feature:
+
+- **Dual Platform Support**: Reddit and Twitter environments running in parallel
+- **AI-Generated Agent Profiles**: LLM creates personality, activity patterns, and stances for each entity
+- **Intelligent Configuration**: System automatically determines optimal simulation parameters
+- **Flexible Preparation**: Generate profiles and configs separately or together
+
+<Steps>
+  <Step title="Create simulation instance">
+    Initialize a new simulation linked to your project:
+
+    <CodeGroup>
+      ```bash cURL
+      curl -X POST http://localhost:5001/api/simulation/create \
+        -H "Content-Type: application/json" \
+        -d '{
+          "project_id": "proj_a1b2c3d4",
+          "enable_twitter": true,
+          "enable_reddit": true
+        }'
+      ```
+
+      ```python Python
+      import requests
+
+      response = requests.post(
+          "http://localhost:5001/api/simulation/create",
+          json={
+              "project_id": "proj_a1b2c3d4",
+              "enable_twitter": True,
+              "enable_reddit": True
+          }
+      )
+
+      result = response.json()
+      simulation_id = result['data']['simulation_id']
+      print(f"Created simulation: {simulation_id}")
+      ```
+
+      ```javascript JavaScript
+      const response = await fetch('http://localhost:5001/api/simulation/create', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          project_id: 'proj_a1b2c3d4',
+          enable_twitter: true,
+          enable_reddit: true
+        })
+      });
+
+      const {data} = await response.json();
+      console.log('Simulation ID:', data.simulation_id);
+      ```
+    </CodeGroup>
+
+    Response:
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "simulation_id": "sim_xyz789",
+        "project_id": "proj_a1b2c3d4",
+        "graph_id": "mirofish_abc123",
+        "status": "created",
+        "enable_twitter": true,
+        "enable_reddit": true,
+        "created_at": "2025-01-15T11:00:00Z"
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Prepare simulation environment">
+    This step generates agent profiles and simulation configuration. It's an asynchronous operation:
+
+    <CodeGroup>
+      ```bash cURL
+      curl -X POST http://localhost:5001/api/simulation/prepare \
+        -H "Content-Type: application/json" \
+        -d '{
+          "simulation_id": "sim_xyz789",
+          "entity_types": ["Student", "Professor", "Administrator"],
+          "use_llm_for_profiles": true,
+          "parallel_profile_count": 5
+        }'
+      ```
+
+      ```python Python
+      import requests
+
+      response = requests.post(
+          "http://localhost:5001/api/simulation/prepare",
+          json={
+              "simulation_id": "sim_xyz789",
+              "entity_types": ["Student", "Professor", "Administrator"],
+              "use_llm_for_profiles": True,
+              "parallel_profile_count": 5
+          }
+      )
+
+      result = response.json()
+      task_id = result['data']['task_id']
+      print(f"Preparation task: {task_id}")
+      ```
+
+      ```javascript JavaScript
+      const response = await fetch('http://localhost:5001/api/simulation/prepare', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          simulation_id: 'sim_xyz789',
+          entity_types: ['Student', 'Professor', 'Administrator'],
+          use_llm_for_profiles: true,
+          parallel_profile_count: 5
+        })
+      });
+
+      const {data} = await response.json();
+      console.log('Task ID:', data.task_id);
+      ```
+    </CodeGroup>
+
+    Response:
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "simulation_id": "sim_xyz789",
+        "task_id": "task_prep_123",
+        "status": "preparing",
+        "message": "准备任务已启动，请通过 /api/simulation/prepare/status 查询进度",
+        "already_prepared": false,
+        "expected_entities_count": 68,
+        "entity_types": ["Student", "Professor", "Administrator"]
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Monitor preparation progress">
+    Track the multi-stage preparation process:
+
+    <CodeGroup>
+      ```bash cURL
+      curl -X POST http://localhost:5001/api/simulation/prepare/status \
+        -H "Content-Type: application/json" \
+        -d '{"task_id": "task_prep_123"}'
+      ```
+
+      ```python Python
+      import requests
+      import time
+
+      task_id = "task_prep_123"
+      url = "http://localhost:5001/api/simulation/prepare/status"
+
+      while True:
+          response = requests.post(url, json={"task_id": task_id})
+          task = response.json()['data']
+          
+          detail = task.get('progress_detail', {})
+          current_stage = detail.get('current_stage_name', 'Processing')
+          current_item = detail.get('current_item', 0)
+          total_items = detail.get('total_items', 0)
+          
+          print(f"{current_stage}: {current_item}/{total_items} ({task['progress']}%)")
+          
+          if task['status'] in ['completed', 'failed']:
+              break
+          
+          time.sleep(3)
+      ```
+
+      ```javascript JavaScript
+      async function monitorPreparation(taskId) {
+        while (true) {
+          const response = await fetch(
+            'http://localhost:5001/api/simulation/prepare/status',
+            {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({task_id: taskId})
+            }
+          );
+          
+          const {data: task} = await response.json();
+          const detail = task.progress_detail || {};
+          
+          console.log(
+            `${detail.current_stage_name}: ${detail.current_item}/${detail.total_items} (${task.progress}%)`
+          );
+          
+          if (['completed', 'failed'].includes(task.status)) {
+            return task;
+          }
+          
+          await new Promise(r => setTimeout(r, 3000));
+        }
+      }
+      ```
+    </CodeGroup>
+
+    Progress stages:
+
+    1. **读取图谱实体** (0-20%): Loading entities from knowledge graph
+    2. **生成Agent人设** (20-70%): Creating AI-powered agent profiles  
+    3. **生成模拟配置** (70-90%): LLM generates simulation parameters
+    4. **准备模拟脚本** (90-100%): Finalizing configuration files
+  </Step>
+
+  <Step title="Review generated configuration">
+    Once preparation completes, inspect the intelligent configuration:
+
+    ```bash
+    curl http://localhost:5001/api/simulation/sim_xyz789/config
+    ```
+
+    The LLM generates comprehensive configuration:
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "time_config": {
+          "total_simulation_hours": 72,
+          "minutes_per_round": 60,
+          "peak_hours": [9, 10, 11, 18, 19, 20],
+          "quiet_hours": [0, 1, 2, 3, 4, 5, 6]
+        },
+        "agent_configs": [
+          {
+            "agent_name": "Zhang Wei",
+            "entity_type": "Student",
+            "activity_level": "high",
+            "posting_frequency": 0.3,
+            "stance": "supportive",
+            "interests": ["campus policy", "student rights"]
+          }
+        ],
+        "event_config": {
+          "initial_posts": [
+            {
+              "platform": "reddit",
+              "author": "University_Official",
+              "content": "Announcing new campus policy...",
+              "timestamp": 0
+            }
+          ],
+          "hot_topics": [
+            "campus access policy",
+            "student safety",
+            "academic freedom"
+          ]
+        },
+        "generation_reasoning": "The simulation spans 72 hours to capture initial reaction and discussion evolution..."
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+## Configuration Parameters
+
+### Create Simulation
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `project_id` | String | Yes | - | Project identifier |
+| `graph_id` | String | No | From project | Override graph ID |
+| `enable_twitter` | Boolean | No | true | Enable Twitter platform |
+| `enable_reddit` | Boolean | No | true | Enable Reddit platform |
+
+### Prepare Simulation
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `simulation_id` | String | Yes | - | Simulation identifier |
+| `entity_types` | String[] | No | All types | Filter entities by type |
+| `use_llm_for_profiles` | Boolean | No | true | Use LLM to generate profiles |
+| `parallel_profile_count` | Integer | No | 5 | Parallel LLM calls for profiles |
+| `force_regenerate` | Boolean | No | false | Force regenerate if already prepared |
+
+## Generated Agent Profiles
+
+Each entity in your knowledge graph becomes an agent with:
+
+### Reddit Profile
+
+```json
+{
+  "name": "Zhang Wei",
+  "profile": {
+    "personality_traits": "Thoughtful, analytical, values academic freedom",
+    "interests": ["computer science", "campus policy", "student governance"],
+    "communication_style": "Formal yet approachable, uses evidence-based arguments"
+  },
+  "activity_patterns": {
+    "posting_frequency": "high",
+    "active_hours": [9, 10, 11, 18, 19, 20],
+    "preferred_subreddits": ["university", "student_life"]
+  },
+  "stance_on_issues": {
+    "campus_policy": "supportive with concerns",
+    "student_rights": "strongly supportive"
+  }
+}
+```
+
+### Twitter Profile
+
+Similar structure exported to CSV format for Twitter simulation engine.
+
+## Viewing Profiles in Real-Time
+
+Monitor profile generation as it happens:
+
+```bash
+curl http://localhost:5001/api/simulation/sim_xyz789/profiles/realtime?platform=reddit
+```
+
+Response shows current progress:
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_xyz789",
+    "platform": "reddit",
+    "count": 45,
+    "total_expected": 68,
+    "is_generating": true,
+    "file_modified_at": "2025-01-15T11:15:30Z",
+    "profiles": [...]
+  }
+}
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Entity Filtering" icon="filter">
+    Filter by entity types to focus your simulation. Not all entities need to be active agents.
+  </Card>
+  
+  <Card title="Parallel Processing" icon="gauge-high">
+    Increase `parallel_profile_count` (5-10) for faster generation, but watch API rate limits.
+  </Card>
+  
+  <Card title="Platform Selection" icon="toggle-on">
+    Disable platforms you don't need to reduce preparation time and complexity.
+  </Card>
+  
+  <Card title="Configuration Review" icon="magnifying-glass">
+    Always review generated config before running simulation - LLM reasoning is visible.
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<Card title="Run Simulation" icon="play" href="/guides/run-simulation">
+  Start your configured simulation and watch agents interact
+</Card>

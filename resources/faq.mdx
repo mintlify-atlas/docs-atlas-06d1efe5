@@ -1,0 +1,289 @@
+---
+title: "Frequently Asked Questions"
+description: "Common questions and answers about using MiroFish"
+---
+
+## General Questions
+
+<AccordionGroup>
+  <Accordion title="What is MiroFish?">
+    MiroFish is a multi-agent swarm intelligence engine that predicts future scenarios by simulating high-fidelity digital worlds. It uses thousands of AI agents with independent personalities, long-term memory, and behavioral logic to create realistic simulations based on real-world seed data.
+  </Accordion>
+  
+  <Accordion title="What can I use MiroFish for?">
+    MiroFish supports various prediction scenarios:
+    
+    - **Public Opinion Analysis**: Predict how social media reacts to events
+    - **Financial Forecasting**: Simulate market behavior and investment scenarios
+    - **Story Prediction**: Explore narrative possibilities and character development
+    - **Policy Testing**: Test policy impacts in a risk-free environment
+    
+    See our [use cases](/use-cases/public-opinion-analysis) for detailed examples.
+  </Accordion>
+  
+  <Accordion title="Is MiroFish open source?">
+    Yes! MiroFish is licensed under AGPL-3.0. You can view the source code, contribute, and deploy it yourself on [GitHub](https://github.com/666ghj/MiroFish).
+  </Accordion>
+  
+  <Accordion title="What are the system requirements?">
+    **Minimum Requirements:**
+    - Node.js 18+
+    - Python 3.11 or 3.12
+    - 8GB RAM
+    - API keys for LLM provider and Zep Cloud
+    
+    **Recommended:**
+    - 16GB+ RAM for larger simulations
+    - SSD storage
+    - Stable internet connection
+    
+    See the [installation guide](/installation) for details.
+  </Accordion>
+</AccordionGroup>
+
+## Setup and Installation
+
+<AccordionGroup>
+  <Accordion title="How do I get started?">
+    Follow these steps:
+    
+    1. Clone the repository
+    2. Configure environment variables (LLM API, Zep Cloud)
+    3. Install dependencies
+    4. Start the services
+    
+    Check our [quickstart guide](/quickstart) for a complete walkthrough.
+  </Accordion>
+  
+  <Accordion title="Which LLM providers are supported?">
+    MiroFish supports any LLM provider with OpenAI SDK compatibility:
+    
+    - **Recommended**: Alibaba Qwen (via Bailian Platform)
+    - OpenAI GPT-4/GPT-3.5
+    - Azure OpenAI
+    - Other OpenAI-compatible APIs
+    
+    Configure your provider in the `.env` file with `LLM_BASE_URL` and `LLM_MODEL_NAME`.
+  </Accordion>
+  
+  <Accordion title="Do I need Zep Cloud?">
+    Yes, Zep Cloud is required for:
+    
+    - Knowledge graph storage (GraphRAG)
+    - Agent long-term memory
+    - Temporal memory updates
+    
+    Zep offers a free tier that's sufficient for basic usage. Sign up at [app.getzep.com](https://app.getzep.com/).
+  </Accordion>
+  
+  <Accordion title="Can I run MiroFish without Docker?">
+    Yes! You can deploy from source code:
+    
+    ```bash
+    npm run setup:all
+    npm run dev
+    ```
+    
+    See [source code deployment](/deployment/source-code) for details.
+  </Accordion>
+</AccordionGroup>
+
+## Usage Questions
+
+<AccordionGroup>
+  <Accordion title="How long does a simulation take?">
+    Simulation time depends on:
+    
+    - **Agent count**: 20-100 agents
+    - **Round count**: Typically 24-72 rounds
+    - **LLM speed**: API response times
+    
+    A typical simulation (50 agents, 48 rounds) takes **20-40 minutes**.
+  </Accordion>
+  
+  <Accordion title="How much does it cost to run a simulation?">
+    Costs depend on your LLM provider:
+    
+    **Example (Qwen-plus at $0.001/call):**
+    - 50 agents × 48 rounds ≈ 2,400 LLM calls
+    - Cost: ~$2.40 per simulation
+    
+    **Budget tips:**
+    - Start with fewer agents (20-30)
+    - Limit rounds for testing (12-24)
+    - Use cheaper models for development
+  </Accordion>
+  
+  <Accordion title="What file formats are supported for seed data?">
+    Supported formats:
+    - **PDF** (.pdf)
+    - **Markdown** (.md)
+    - **Plain text** (.txt)
+    
+    Files are parsed and chunked for knowledge graph construction.
+  </Accordion>
+  
+  <Accordion title="Can I pause or stop a simulation?">
+    Yes! Use the simulation control API:
+    
+    ```bash
+    # Pause simulation
+    curl -X POST http://localhost:5001/api/simulation/stop \
+      -H "Content-Type: application/json" \
+      -d '{"simulation_id": "your_sim_id"}'
+    ```
+    
+    See [run simulation guide](/guides/run-simulation) for details.
+  </Accordion>
+  
+  <Accordion title="How do I interpret simulation results?">
+    After simulation:
+    
+    1. **Generate a report** using the Report API
+    2. **Chat with Report Agent** to explore findings
+    3. **Interview agents** to understand individual perspectives
+    4. **Analyze timeline** to see how opinions evolved
+    
+    Check the [generate reports guide](/guides/generate-reports) for details.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Simulation fails with 'Invalid API key' error">
+    **Solution:**
+    
+    1. Check `.env` file has correct `LLM_API_KEY` and `ZEP_API_KEY`
+    2. Verify keys are valid (test with provider's API)
+    3. Restart backend after changing `.env`
+    
+    ```bash
+    npm run backend
+    ```
+  </Accordion>
+  
+  <Accordion title="Port 5001 or 3000 already in use">
+    **Solution:**
+    
+    Find and kill the process:
+    
+    ```bash
+    # macOS/Linux
+    lsof -ti:5001 | xargs kill -9
+    lsof -ti:3000 | xargs kill -9
+    
+    # Windows
+    netstat -ano | findstr :5001
+    taskkill /PID <PID> /F
+    ```
+    
+    See [troubleshooting guide](/deployment/troubleshooting) for more.
+  </Accordion>
+  
+  <Accordion title="Frontend can't connect to backend">
+    **Check:**
+    
+    1. Backend is running on port 5001
+    2. CORS is enabled (automatic in MiroFish)
+    3. No firewall blocking localhost connections
+    
+    **Test backend:**
+    ```bash
+    curl http://localhost:5001/health
+    ```
+  </Accordion>
+  
+  <Accordion title="Knowledge graph build fails">
+    **Common causes:**
+    
+    - Invalid Zep API key
+    - Document too large (reduce `chunk_size`)
+    - Network connectivity issues
+    
+    **Debug steps:**
+    1. Check backend logs for error details
+    2. Verify Zep Cloud quota (check dashboard)
+    3. Try smaller documents first
+  </Accordion>
+</AccordionGroup>
+
+## Advanced Topics
+
+<AccordionGroup>
+  <Accordion title="Can I customize agent behaviors?">
+    Yes! Agent behaviors can be customized through:
+    
+    - **Ontology design**: Define custom entity types
+    - **Persona prompts**: Modify profile generation logic
+    - **Action probabilities**: Adjust activity patterns
+    
+    See [customization guide](/advanced/customization) for details.
+  </Accordion>
+  
+  <Accordion title="How does MiroFish compare to traditional forecasting?">
+    **MiroFish advantages:**
+    
+    - **Emergent behavior**: Captures collective dynamics
+    - **Individual perspectives**: Understand diverse viewpoints
+    - **Temporal evolution**: See how opinions change over time
+    - **Interactive exploration**: Chat with agents and Report Agent
+    
+    **Traditional forecasting:**
+    - Statistical models (regression, time series)
+    - No individual agent modeling
+    - Limited scenario exploration
+  </Accordion>
+  
+  <Accordion title="What is OASIS?">
+    OASIS (Open Agent Social Interaction Simulations) is the simulation framework powering MiroFish. Developed by CAMEL-AI, it provides:
+    
+    - Reddit and Twitter simulation environments
+    - Agent action models (post, like, follow, etc.)
+    - Realistic social dynamics
+    
+    Learn more: [OASIS integration](/advanced/oasis-integration)
+  </Accordion>
+</AccordionGroup>
+
+## Community and Support
+
+<AccordionGroup>
+  <Accordion title="How do I get help?">
+    **Quick questions:**
+    - Join our [Discord](https://discord.com/channels/1469200078932545606/1469201282077163739)
+    
+    **Bug reports:**
+    - Open an [issue on GitHub](https://github.com/666ghj/MiroFish/issues)
+    
+    **Feature requests:**
+    - Start a [GitHub discussion](https://github.com/666ghj/MiroFish/discussions)
+  </Accordion>
+  
+  <Accordion title="Can I contribute to MiroFish?">
+    Absolutely! We welcome:
+    
+    - Code contributions (bug fixes, features)
+    - Documentation improvements
+    - Bug reports and feature ideas
+    - Community support
+    
+    See our [contributing guide](/resources/contributing) to get started.
+  </Accordion>
+  
+  <Accordion title="Are there career opportunities?">
+    Yes! MiroFish is hiring for full-time and internship positions focused on:
+    
+    - Multi-agent systems
+    - LLM applications
+    - Swarm intelligence
+    
+    Send your resume to **mirofish@shanda.com**
+  </Accordion>
+</AccordionGroup>
+
+---
+
+<Card title="Still have questions?" icon="question" href="/resources/community">
+  Join our community channels for more help and discussions!
+</Card>

@@ -1,0 +1,320 @@
+---
+title: 'Build Knowledge Graph'
+description: 'Construct a Zep knowledge graph from your uploaded documents and ontology definition'
+---
+
+## Overview
+
+After uploading documents and generating an ontology, the next step is building a knowledge graph. MiroFish uses Zep Cloud to create a graph database that:
+
+- Extracts entities and relationships from your documents
+- Chunks text for efficient processing
+- Creates a searchable knowledge graph with GraphRAG capabilities
+- Enables agents to query and reason about the domain
+
+<Warning>
+  This is an asynchronous operation that can take several minutes depending on document size. Monitor progress using the task status endpoint.
+</Warning>
+
+<Steps>
+  <Step title="Initiate graph building">
+    Use the `/api/graph/build` endpoint with your `project_id` from the previous step.
+
+    <CodeGroup>
+      ```bash cURL
+      curl -X POST http://localhost:5001/api/graph/build \
+        -H "Content-Type: application/json" \
+        -d '{
+          "project_id": "proj_a1b2c3d4",
+          "graph_name": "Wuhan University Knowledge Graph",
+          "chunk_size": 500,
+          "chunk_overlap": 50
+        }'
+      ```
+
+      ```python Python
+      import requests
+
+      url = "http://localhost:5001/api/graph/build"
+      payload = {
+          "project_id": "proj_a1b2c3d4",
+          "graph_name": "Wuhan University Knowledge Graph",
+          "chunk_size": 500,
+          "chunk_overlap": 50
+      }
+
+      response = requests.post(url, json=payload)
+      result = response.json()
+
+      print(f"Task ID: {result['data']['task_id']}")
+      print(f"Message: {result['data']['message']}")
+      ```
+
+      ```javascript JavaScript
+      const response = await fetch('http://localhost:5001/api/graph/build', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          project_id: 'proj_a1b2c3d4',
+          graph_name: 'Wuhan University Knowledge Graph',
+          chunk_size: 500,
+          chunk_overlap: 50
+        })
+      });
+
+      const result = await response.json();
+      console.log('Task ID:', result.data.task_id);
+      ```
+    </CodeGroup>
+
+    The API returns immediately with a task ID:
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "project_id": "proj_a1b2c3d4",
+        "task_id": "task_x1y2z3",
+        "message": "图谱构建任务已启动，请通过 /task/{task_id} 查询进度"
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Monitor build progress">
+    Poll the task status endpoint to track progress:
+
+    <CodeGroup>
+      ```bash cURL
+      curl http://localhost:5001/api/graph/task/task_x1y2z3
+      ```
+
+      ```python Python
+      import requests
+      import time
+
+      task_id = "task_x1y2z3"
+      url = f"http://localhost:5001/api/graph/task/{task_id}"
+
+      while True:
+          response = requests.get(url)
+          task = response.json()['data']
+          
+          print(f"Status: {task['status']} - {task['message']} ({task['progress']}%)")
+          
+          if task['status'] in ['completed', 'failed']:
+              break
+          
+          time.sleep(5)  # Poll every 5 seconds
+      ```
+
+      ```javascript JavaScript
+      async function monitorTask(taskId) {
+        const url = `http://localhost:5001/api/graph/task/${taskId}`;
+        
+        while (true) {
+          const response = await fetch(url);
+          const {data: task} = await response.json();
+          
+          console.log(`${task.status}: ${task.message} (${task.progress}%)`);
+          
+          if (['completed', 'failed'].includes(task.status)) {
+            return task;
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+      }
+
+      const result = await monitorTask('task_x1y2z3');
+      ```
+    </CodeGroup>
+
+    Progress response:
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "task_id": "task_x1y2z3",
+        "status": "processing",
+        "progress": 65,
+        "message": "等待Zep处理数据: 已处理 128/200 episodes",
+        "created_at": "2025-01-15T10:30:00Z",
+        "updated_at": "2025-01-15T10:35:00Z"
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Verify completion">
+    When the task completes, you'll receive detailed results:
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "task_id": "task_x1y2z3",
+        "status": "completed",
+        "progress": 100,
+        "message": "图谱构建完成",
+        "result": {
+          "project_id": "proj_a1b2c3d4",
+          "graph_id": "mirofish_abc123",
+          "node_count": 156,
+          "edge_count": 342,
+          "chunk_count": 200
+        }
+      }
+    }
+    ```
+
+    <Note>
+      Save the `graph_id` - this is your knowledge graph identifier for simulation setup!
+    </Note>
+  </Step>
+
+  <Step title="Query graph data (optional)">
+    You can inspect the built graph using the graph data endpoint:
+
+    ```bash
+    curl http://localhost:5001/api/graph/data/mirofish_abc123
+    ```
+
+    Response includes nodes and edges:
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "graph_id": "mirofish_abc123",
+        "node_count": 156,
+        "edge_count": 342,
+        "nodes": [
+          {
+            "uuid": "node_001",
+            "name": "Zhang Wei",
+            "labels": ["Student"],
+            "properties": {...}
+          }
+        ],
+        "edges": [
+          {
+            "uuid": "edge_001",
+            "name": "ATTENDS",
+            "source": "node_001",
+            "target": "node_002"
+          }
+        ]
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+## Request Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `project_id` | String | Yes | - | Project ID from ontology generation |
+| `graph_name` | String | No | Project name | Human-readable graph name |
+| `chunk_size` | Integer | No | 500 | Text chunk size in characters |
+| `chunk_overlap` | Integer | No | 50 | Overlap between chunks for context |
+| `force` | Boolean | No | false | Force rebuild even if graph exists |
+
+## Build Process Stages
+
+The graph building process goes through several stages:
+
+1. **Text Chunking** (0-5%): Splits documents into processable chunks
+2. **Graph Creation** (5-10%): Creates a new graph in Zep Cloud
+3. **Ontology Setup** (10-15%): Applies entity and relationship definitions
+4. **Text Processing** (15-55%): Adds text chunks to graph in batches
+5. **Zep Processing** (55-90%): Waits for Zep to extract entities/relationships
+6. **Data Retrieval** (90-100%): Fetches final graph statistics
+
+## Configuration Tips
+
+### Chunk Size
+
+<AccordionGroup>
+  <Accordion title="Small chunks (200-400)">
+    - **Pros**: More precise entity extraction, better for technical docs
+    - **Cons**: Higher processing time, more API calls
+    - **Best for**: Structured reports, academic papers
+  </Accordion>
+
+  <Accordion title="Medium chunks (400-600)">
+    - **Pros**: Balanced performance and accuracy
+    - **Cons**: None significant
+    - **Best for**: Most use cases (default: 500)
+  </Accordion>
+
+  <Accordion title="Large chunks (600-1000)">
+    - **Pros**: Faster processing, fewer API calls
+    - **Cons**: May miss fine-grained relationships
+    - **Best for**: Narrative content, novels, long-form text
+  </Accordion>
+</AccordionGroup>
+
+### Chunk Overlap
+
+Overlap ensures context is preserved across chunk boundaries:
+
+- **Low overlap (20-40)**: Faster processing, use for independent paragraphs
+- **Medium overlap (50-80)**: Recommended for most content
+- **High overlap (100+)**: Better context, use for dense technical content
+
+## Error Handling
+
+<AccordionGroup>
+  <Accordion title="Project not found">
+    **Error**: `"项目不存在: proj_xxxx"`
+    
+    **Solution**: Verify the project_id from the ontology generation step.
+  </Accordion>
+
+  <Accordion title="Ontology not generated">
+    **Error**: `"项目尚未生成本体，请先调用 /ontology/generate"`
+    
+    **Solution**: Complete the upload seed data step first.
+  </Accordion>
+
+  <Accordion title="Graph already building">
+    **Error**: `"图谱正在构建中，请勿重复提交"`
+    
+    **Solution**: Wait for current build to complete, or use `"force": true` to rebuild.
+  </Accordion>
+
+  <Accordion title="Zep API error">
+    **Error**: `"ZEP_API_KEY未配置"` or Zep connection errors
+    
+    **Solution**: Verify your `ZEP_API_KEY` in `.env` and check Zep Cloud status.
+  </Accordion>
+</AccordionGroup>
+
+## Force Rebuild
+
+If you need to rebuild an existing graph (e.g., after updating documents):
+
+```json
+{
+  "project_id": "proj_a1b2c3d4",
+  "force": true
+}
+```
+
+<Warning>
+  Force rebuild will delete the existing graph and create a new one. All simulation data referencing the old graph may become invalid.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configure Simulation" icon="sliders" href="/guides/configure-simulation">
+    Set up simulation parameters and agent profiles
+  </Card>
+  <Card title="View Project" icon="folder" href="/api/graph/projects">
+    Check your project status and metadata
+  </Card>
+</CardGroup>

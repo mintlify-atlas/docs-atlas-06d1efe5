@@ -1,0 +1,644 @@
+---
+title: Installation
+description: Complete installation guide for MiroFish including prerequisites, source deployment, and Docker deployment
+---
+
+# Installation Guide
+
+MiroFish can be deployed in two ways: from source code (recommended for development) or using Docker (recommended for production).
+
+## Prerequisites
+
+Before installing MiroFish, ensure your system meets these requirements:
+
+### System Requirements
+
+| Component | Requirement | Notes |
+|-----------|-------------|-------|
+| **Operating System** | Linux, macOS, or Windows | Windows requires WSL for best experience |
+| **RAM** | 4GB minimum, 8GB recommended | More RAM needed for larger simulations |
+| **Disk Space** | 2GB minimum | Additional space for simulation data |
+
+### Required Tools
+
+<Steps>
+
+### Install Node.js
+
+<Note>
+**Required Version**: Node.js 18.0.0 or higher
+</Note>
+
+Node.js is required for the frontend and build scripts.
+
+<CodeGroup>
+
+```bash macOS (Homebrew)
+brew install node
+```
+
+```bash Ubuntu/Debian
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+```bash Windows
+# Download from https://nodejs.org/
+# Or use nvm-windows: https://github.com/coreybutler/nvm-windows
+```
+
+</CodeGroup>
+
+Verify installation:
+
+```bash
+node -v
+# Should output v18.0.0 or higher
+
+npm -v
+# Should output npm version
+```
+
+### Install Python
+
+<Warning>
+**Version Requirement**: Python ≥3.11, ≤3.12
+
+MiroFish requires Python 3.11 or 3.12. Python 3.13+ is not yet supported due to dependency constraints.
+</Warning>
+
+<CodeGroup>
+
+```bash macOS (Homebrew)
+brew install python@3.12
+```
+
+```bash Ubuntu/Debian
+sudo apt update
+sudo apt install python3.12 python3.12-venv python3-pip
+```
+
+```bash Windows
+# Download from https://www.python.org/downloads/
+# Ensure "Add Python to PATH" is checked during installation
+```
+
+</CodeGroup>
+
+Verify installation:
+
+```bash
+python --version
+# Should output Python 3.11.x or 3.12.x
+```
+
+### Install uv
+
+<Note>
+uv is a fast Python package manager that MiroFish uses for dependency management.
+</Note>
+
+<CodeGroup>
+
+```bash macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+```bash Windows (PowerShell)
+irm https://astral.sh/uv/install.ps1 | iex
+```
+
+```bash Using pip
+pip install uv
+```
+
+</CodeGroup>
+
+Verify installation:
+
+```bash
+uv --version
+```
+
+</Steps>
+
+## Source Code Deployment (Recommended)
+
+Source deployment gives you full control and is best for development and customization.
+
+<Steps>
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/666ghj/MiroFish.git
+cd MiroFish
+```
+
+### Configure Environment Variables
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your preferred text editor:
+
+```bash
+# Use nano, vim, or any editor
+nano .env
+```
+
+**Required configuration:**
+
+```env .env
+# ===== LLM API Configuration =====
+# Supports any OpenAI SDK compatible API
+# Recommended: Alibaba Qwen-plus via Bailian Platform
+# https://bailian.console.aliyun.com/
+LLM_API_KEY=your_api_key_here
+LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+LLM_MODEL_NAME=qwen-plus
+
+# ===== Zep Cloud Configuration =====
+# Free monthly quota supports simple usage
+# https://app.getzep.com/
+ZEP_API_KEY=your_zep_api_key_here
+```
+
+<Warning>
+**API Key Security**
+
+- Never commit `.env` to version control
+- Keep your API keys private
+- Regenerate keys if accidentally exposed
+</Warning>
+
+**Optional boost configuration:**
+
+```env .env (Optional)
+# ===== Accelerated LLM Configuration (Optional) =====
+# Only include these if you want to use a secondary faster LLM
+# If not using, remove these lines entirely from .env
+LLM_BOOST_API_KEY=your_api_key_here
+LLM_BOOST_BASE_URL=your_base_url_here
+LLM_BOOST_MODEL_NAME=your_model_name_here
+```
+
+### Install Dependencies
+
+**One-command installation (recommended):**
+
+```bash
+npm run setup:all
+```
+
+This installs:
+- Root package dependencies (concurrently)
+- Frontend dependencies (Vue 3, Vite, D3, Axios, Vue Router)
+- Backend dependencies (Flask, OpenAI SDK, Zep Cloud, OASIS, etc.)
+- Creates Python virtual environment automatically
+
+**Alternative step-by-step installation:**
+
+```bash Install Frontend
+# Install root and frontend Node.js dependencies
+npm run setup
+```
+
+```bash Install Backend
+# Install Python dependencies in virtual environment
+npm run setup:backend
+```
+
+<Note>
+The backend setup uses `uv sync` which automatically:
+- Creates a virtual environment
+- Installs all dependencies from `requirements.txt`
+- Manages Python package versions
+</Note>
+
+### Start the Application
+
+**Start both frontend and backend:**
+
+```bash
+npm run dev
+```
+
+This uses `concurrently` to run both services simultaneously:
+- Backend starts on `http://localhost:5001`
+- Frontend starts on `http://localhost:3000`
+
+You should see colored output:
+
+```
+[backend] ==================================================
+[backend] MiroFish Backend 启动中...
+[backend] ==================================================
+[backend] 已注册模拟进程清理函数
+[backend] MiroFish Backend 启动完成
+[backend]  * Running on http://0.0.0.0:5001
+[frontend] 
+[frontend]   VITE v7.2.4  ready in 423 ms
+[frontend] 
+[frontend]   ➜  Local:   http://localhost:3000/
+[frontend]   ➜  Network: http://192.168.1.100:3000/
+```
+
+**Start services individually:**
+
+<CodeGroup>
+
+```bash Backend Only
+npm run backend
+# Runs: cd backend && uv run python run.py
+```
+
+```bash Frontend Only
+npm run frontend
+# Runs: cd frontend && npm run dev
+```
+
+</CodeGroup>
+
+### Verify Installation
+
+Test that both services are running:
+
+```bash Check Backend Health
+curl http://localhost:5001/health
+# Expected output: {"status":"ok","service":"MiroFish Backend"}
+```
+
+```bash Check Frontend
+curl http://localhost:3000
+# Should return HTML content
+```
+
+Open your browser to http://localhost:3000 to access the MiroFish interface.
+
+</Steps>
+
+## Docker Deployment
+
+Docker deployment provides a consistent environment and is recommended for production use.
+
+<Steps>
+
+### Install Docker
+
+If you don't have Docker installed:
+
+<CodeGroup>
+
+```bash macOS
+# Download Docker Desktop from:
+# https://www.docker.com/products/docker-desktop
+```
+
+```bash Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install docker.io docker-compose
+sudo systemctl start docker
+sudo systemctl enable docker
+```
+
+```bash Windows
+# Download Docker Desktop from:
+# https://www.docker.com/products/docker-desktop
+# Requires WSL2
+```
+
+</CodeGroup>
+
+Verify Docker installation:
+
+```bash
+docker --version
+docker compose version
+```
+
+### Clone and Configure
+
+Clone the repository:
+
+```bash
+git clone https://github.com/666ghj/MiroFish.git
+cd MiroFish
+```
+
+Set up environment variables (same as source deployment):
+
+```bash
+cp .env.example .env
+nano .env  # Edit with your API keys
+```
+
+### Start with Docker Compose
+
+```bash
+docker compose up -d
+```
+
+This command will:
+1. Pull the MiroFish image from GitHub Container Registry
+2. Read environment variables from `.env`
+3. Start the container in detached mode
+4. Map ports 3000 (frontend) and 5001 (backend)
+5. Mount `./backend/uploads` for persistent data
+
+<Note>
+**Faster Image Pulling in China**
+
+If image pulling is slow, you can use the NJU mirror. Edit `docker-compose.yml`:
+
+```yaml docker-compose.yml
+services:
+  mirofish:
+    # image: ghcr.io/666ghj/mirofish:latest
+    image: ghcr.nju.edu.cn/666ghj/mirofish:latest  # Use this instead
+```
+</Note>
+
+### Manage Docker Container
+
+<CodeGroup>
+
+```bash View Logs
+docker compose logs -f
+```
+
+```bash Stop Container
+docker compose down
+```
+
+```bash Restart Container
+docker compose restart
+```
+
+```bash Update to Latest
+docker compose pull
+docker compose up -d
+```
+
+```bash View Status
+docker compose ps
+```
+
+</CodeGroup>
+
+### Access the Application
+
+Once the container is running:
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:5001
+- **Health Check**: http://localhost:5001/health
+
+</Steps>
+
+## Configuration Reference
+
+Here's a complete reference of all environment variables:
+
+### Core Configuration
+
+```env
+# Flask Configuration
+SECRET_KEY=mirofish-secret-key  # Change in production
+FLASK_DEBUG=True                # Set to False in production
+FLASK_HOST=0.0.0.0             # Server bind address
+FLASK_PORT=5001                # Backend port
+```
+
+### LLM Configuration
+
+```env
+# Required: Primary LLM API
+LLM_API_KEY=your_api_key
+LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+LLM_MODEL_NAME=qwen-plus
+
+# Optional: Accelerated LLM for faster operations
+LLM_BOOST_API_KEY=your_boost_key
+LLM_BOOST_BASE_URL=your_boost_url
+LLM_BOOST_MODEL_NAME=your_boost_model
+```
+
+### Memory Configuration
+
+```env
+# Required: Zep Cloud for knowledge graphs and memory
+ZEP_API_KEY=your_zep_api_key
+```
+
+### Simulation Configuration
+
+```env
+# Default number of simulation rounds
+OASIS_DEFAULT_MAX_ROUNDS=10
+
+# Report Agent settings
+REPORT_AGENT_MAX_TOOL_CALLS=5
+REPORT_AGENT_MAX_REFLECTION_ROUNDS=2
+REPORT_AGENT_TEMPERATURE=0.5
+```
+
+## Backend Dependencies
+
+The complete list of Python dependencies (from `requirements.txt`):
+
+```txt backend/requirements.txt
+# Core Framework
+flask>=3.0.0
+flask-cors>=6.0.0
+
+# LLM Integration
+openai>=1.0.0
+
+# Memory & Knowledge Graphs
+zep-cloud==3.13.0
+
+# OASIS Simulation Engine
+camel-oasis==0.2.5
+camel-ai==0.2.78
+
+# File Processing
+PyMuPDF>=1.24.0
+charset-normalizer>=3.0.0
+chardet>=5.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+```
+
+## Frontend Dependencies
+
+The frontend uses modern Vue 3 stack (from `frontend/package.json`):
+
+```json
+{
+  "dependencies": {
+    "vue": "^3.5.24",
+    "vue-router": "^4.6.3",
+    "axios": "^1.13.2",
+    "d3": "^7.9.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "vite": "^7.2.4"
+  }
+}
+```
+
+## Troubleshooting
+
+### Python Version Issues
+
+**Problem**: `uv` fails with Python version errors
+
+**Solution**: Ensure Python 3.11 or 3.12 is installed and default:
+
+```bash
+python --version
+# If wrong version, use pyenv or specify Python version to uv
+```
+
+### Port Already in Use
+
+**Problem**: Port 3000 or 5001 already in use
+
+**Solution**: Change ports in environment variables:
+
+```env
+FLASK_PORT=5002  # Change backend port
+```
+
+For frontend, edit `frontend/package.json`:
+
+```json
+"dev": "vite --host --port 3001"
+```
+
+### API Connection Errors
+
+**Problem**: Frontend can't connect to backend
+
+**Solution**: 
+1. Verify backend is running: `curl http://localhost:5001/health`
+2. Check CORS settings in `backend/app/__init__.py`
+3. Ensure no firewall blocking ports
+
+### Docker Build Issues
+
+**Problem**: Docker image won't pull or build
+
+**Solution**:
+```bash
+# Try pulling with verbose output
+docker compose pull --progress=plain
+
+# Or use the NJU mirror (see Docker Deployment section)
+```
+
+### Memory Errors During Simulation
+
+**Problem**: System runs out of memory
+
+**Solution**:
+- Reduce simulation rounds
+- Use fewer agents
+- Increase system RAM
+- Close other applications
+
+## Advanced Configuration
+
+### Custom Upload Directory
+
+By default, uploads are stored in `backend/uploads`. To change:
+
+```python backend/app/config.py
+UPLOAD_FOLDER = '/custom/path/to/uploads'
+```
+
+### Allowed File Extensions
+
+To support additional file types:
+
+```python backend/app/config.py
+ALLOWED_EXTENSIONS = {'pdf', 'md', 'txt', 'markdown', 'doc', 'docx'}
+```
+
+### Text Chunking Settings
+
+Adjust how documents are split:
+
+```python backend/app/config.py
+DEFAULT_CHUNK_SIZE = 500      # Characters per chunk
+DEFAULT_CHUNK_OVERLAP = 50    # Overlap between chunks
+```
+
+## Production Deployment
+
+For production environments:
+
+<Warning>
+**Production Checklist**
+
+- [ ] Set `FLASK_DEBUG=False`
+- [ ] Use strong `SECRET_KEY`
+- [ ] Configure proper CORS origins
+- [ ] Set up reverse proxy (nginx)
+- [ ] Enable HTTPS
+- [ ] Configure log rotation
+- [ ] Set up monitoring
+- [ ] Regular backups of simulation data
+</Warning>
+
+### Example nginx Configuration
+
+```nginx /etc/nginx/sites-available/mirofish
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    # Frontend
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Backend API
+    location /api {
+        proxy_pass http://localhost:5001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Run your first simulation
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/introduction">
+    Explore the backend API
+  </Card>
+</CardGroup>
+
+## Getting Help
+
+If you encounter issues:
+
+1. Check the [GitHub Issues](https://github.com/666ghj/MiroFish/issues)
+2. Join our [Discord](https://discord.com/channels/1469200078932545606/1469201282077163739)
+3. Email support: mirofish@shanda.com

@@ -1,0 +1,376 @@
+---
+title: "Ontology Generation"
+description: "Upload documents and generate AI-powered domain ontologies for knowledge graph construction"
+---
+
+## Overview
+
+The Ontology Generation endpoint analyzes your documents and simulation requirements to automatically generate a domain-specific ontology. This ontology defines the entity types and relationship types that will be extracted when building the knowledge graph.
+
+## Generate Ontology
+
+```http
+POST /api/graph/ontology/generate
+```
+
+This endpoint uses multipart form data to accept file uploads along with text parameters.
+
+### Request Parameters
+
+<ParamField body="files" type="file[]" required>
+  One or more document files (PDF, Markdown, or TXT format). Multiple files can be uploaded in a single request.
+  
+  **Supported formats:**
+  - `.pdf` - PDF documents
+  - `.md`, `.markdown` - Markdown files
+  - `.txt` - Plain text files
+</ParamField>
+
+<ParamField body="simulation_requirement" type="string" required>
+  Description of what you want to model or simulate with the knowledge graph. This guides the LLM in determining relevant entity and relationship types.
+  
+  **Examples:**
+  - "Analyze relationships between diseases and treatments"
+  - "Model organizational structure and reporting hierarchies"
+  - "Extract technical concepts and their dependencies"
+</ParamField>
+
+<ParamField body="project_name" type="string" default="Unnamed Project">
+  Human-readable name for the project. Used for organization and as the default graph name.
+</ParamField>
+
+<ParamField body="additional_context" type="string">
+  Optional additional instructions or context to guide ontology generation. Use this to specify:
+  - Specific entity types to focus on or ignore
+  - Domain-specific terminology
+  - Relationship nuances
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Generated ontology and project information
+  
+  <Expandable title="Response data">
+    <ResponseField name="project_id" type="string">
+      Unique project identifier (format: `proj_xxxxxxxxxxxx`). Use this for the graph building step.
+    </ResponseField>
+    
+    <ResponseField name="project_name" type="string">
+      The project name
+    </ResponseField>
+    
+    <ResponseField name="ontology" type="object">
+      Generated ontology definition
+      
+      <Expandable title="Ontology object">
+        <ResponseField name="entity_types" type="array">
+          Array of entity type definitions. Each entity type represents a category of nodes in the graph.
+          
+          Each entity type may include:
+          - `name`: Entity type identifier
+          - `description`: What this entity represents
+          - `properties`: Expected attributes
+        </ResponseField>
+        
+        <ResponseField name="edge_types" type="array">
+          Array of relationship type definitions. Each edge type represents a type of connection between entities.
+          
+          Each edge type may include:
+          - `name`: Relationship identifier
+          - `description`: What this relationship represents
+          - `source_types`: Valid source entity types
+          - `target_types`: Valid target entity types
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="analysis_summary" type="string">
+      LLM-generated summary explaining the ontology design decisions and domain analysis
+    </ResponseField>
+    
+    <ResponseField name="files" type="array">
+      List of successfully processed files with `filename` and `size` (bytes)
+    </ResponseField>
+    
+    <ResponseField name="total_text_length" type="integer">
+      Total number of characters extracted from all documents
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+```bash curl
+curl -X POST "http://localhost:5000/api/graph/ontology/generate" \
+  -F "files=@research_paper.pdf" \
+  -F "files=@methodology.md" \
+  -F "simulation_requirement=Analyze relationships between diseases, treatments, and genetic markers" \
+  -F "project_name=Medical Research Analysis" \
+  -F "additional_context=Focus on oncology domain"
+```
+
+```python Python
+import requests
+
+# Prepare files
+files = [
+    ('files', ('research_paper.pdf', open('research_paper.pdf', 'rb'), 'application/pdf')),
+    ('files', ('methodology.md', open('methodology.md', 'rb'), 'text/markdown'))
+]
+
+# Prepare form data
+data = {
+    'simulation_requirement': 'Analyze relationships between diseases, treatments, and genetic markers',
+    'project_name': 'Medical Research Analysis',
+    'additional_context': 'Focus on oncology domain'
+}
+
+response = requests.post(
+    'http://localhost:5000/api/graph/ontology/generate',
+    files=files,
+    data=data
+)
+
+result = response.json()
+if result['success']:
+    project_id = result['data']['project_id']
+    ontology = result['data']['ontology']
+    
+    print(f"Project created: {project_id}")
+    print(f"Entity types: {[e['name'] for e in ontology['entity_types']]}")
+    print(f"Relationship types: {[e['name'] for e in ontology['edge_types']]}")
+```
+
+```javascript JavaScript
+const formData = new FormData();
+
+// Add files
+formData.append('files', fileInput.files[0]);
+formData.append('files', fileInput.files[1]);
+
+// Add text fields
+formData.append('simulation_requirement', 
+  'Analyze relationships between diseases, treatments, and genetic markers');
+formData.append('project_name', 'Medical Research Analysis');
+formData.append('additional_context', 'Focus on oncology domain');
+
+const response = await fetch(
+  'http://localhost:5000/api/graph/ontology/generate',
+  {
+    method: 'POST',
+    body: formData
+  }
+);
+
+const result = await response.json();
+if (result.success) {
+  console.log('Project ID:', result.data.project_id);
+  console.log('Ontology:', result.data.ontology);
+}
+```
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "project_id": "proj_a1b2c3d4e5f6",
+    "project_name": "Medical Research Analysis",
+    "ontology": {
+      "entity_types": [
+        {
+          "name": "Disease",
+          "description": "Medical conditions and pathologies"
+        },
+        {
+          "name": "Treatment",
+          "description": "Therapeutic interventions including drugs and procedures"
+        },
+        {
+          "name": "Gene",
+          "description": "Genetic markers and mutations"
+        },
+        {
+          "name": "Protein",
+          "description": "Proteins and biomarkers"
+        }
+      ],
+      "edge_types": [
+        {
+          "name": "treats",
+          "description": "Treatment is used to treat disease"
+        },
+        {
+          "name": "associated_with",
+          "description": "Gene or protein is associated with disease"
+        },
+        {
+          "name": "targets",
+          "description": "Treatment targets specific gene or protein"
+        }
+      ]
+    },
+    "analysis_summary": "Based on the medical research documents, the ontology focuses on disease-treatment relationships with emphasis on genetic factors. The domain is oncology-focused with entities representing clinical and molecular concepts. Key relationships model therapeutic mechanisms and genetic associations.",
+    "files": [
+      {"filename": "research_paper.pdf", "size": 245680},
+      {"filename": "methodology.md", "size": 8942}
+    ],
+    "total_text_length": 52341
+  }
+}
+```
+
+---
+
+## How Ontology Generation Works
+
+<Steps>
+  <Step title="File Upload & Text Extraction">
+    Documents are uploaded and text content is extracted using appropriate parsers (PDF, Markdown, plain text).
+  </Step>
+  
+  <Step title="Text Preprocessing">
+    Extracted text is cleaned and normalized to improve LLM analysis quality.
+  </Step>
+  
+  <Step title="LLM Analysis">
+    The preprocessed documents are sent to an LLM along with the simulation requirement and additional context. The LLM analyzes:
+    - Key concepts and entities in the domain
+    - Relationships between concepts
+    - Relevance to the stated simulation requirement
+  </Step>
+  
+  <Step title="Ontology Structuring">
+    The LLM outputs a structured ontology with:
+    - Entity types (categories of nodes)
+    - Edge types (categories of relationships)
+    - Analysis summary explaining design decisions
+  </Step>
+  
+  <Step title="Project Persistence">
+    The ontology, extracted text, and file metadata are saved to the project for use in graph building.
+  </Step>
+</Steps>
+
+---
+
+## Error Responses
+
+### Missing Required Field (400)
+
+```json
+{
+  "success": false,
+  "error": "请提供模拟需求描述 (simulation_requirement)"
+}
+```
+
+### No Files Uploaded (400)
+
+```json
+{
+  "success": false,
+  "error": "请至少上传一个文档文件"
+}
+```
+
+### Unsupported File Format (400)
+
+```json
+{
+  "success": false,
+  "error": "没有成功处理任何文档，请检查文件格式"
+}
+```
+
+<Note>
+  Only files with extensions `.pdf`, `.md`, `.markdown`, and `.txt` are processed. Other file types are silently ignored.
+</Note>
+
+### LLM Processing Error (500)
+
+```json
+{
+  "success": false,
+  "error": "OpenAI API error: Rate limit exceeded",
+  "traceback": "Traceback (most recent call last):\n  ..."
+}
+```
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Writing Effective Simulation Requirements">
+    The `simulation_requirement` parameter is critical for generating a useful ontology. Follow these guidelines:
+    
+    **Good examples:**
+    - "Model supply chain relationships between suppliers, manufacturers, and distributors"
+    - "Extract software architecture components and their dependencies"
+    - "Analyze scientific citations and research collaboration networks"
+    
+    **Poor examples:**
+    - "Build a graph" (too vague)
+    - "Extract everything" (lacks focus)
+    - "Parse the PDF" (describes process, not goal)
+    
+    Be specific about:
+    - What types of entities matter
+    - What relationships you want to discover
+    - The end use case for the graph
+  </Accordion>
+  
+  <Accordion title="Using Additional Context">
+    The `additional_context` field helps refine the ontology:
+    
+    **Specify domain terminology:**
+    - "Use 'Customer' instead of 'User'"
+    - "Distinguish between 'Manager' and 'Director' roles"
+    
+    **Provide constraints:**
+    - "Ignore historical context, focus on current state"
+    - "Only extract relationships explicitly stated, not inferred"
+    
+    **Add domain knowledge:**
+    - "In this domain, 'association' implies causation"
+    - "Treat code dependencies as hierarchical, not bidirectional"
+  </Accordion>
+  
+  <Accordion title="Document Preparation">
+    For best results:
+    - **Clean PDFs**: Ensure PDFs have extractable text, not scanned images
+    - **Structure**: Well-organized documents with clear headings improve extraction
+    - **Length**: 10,000-100,000 characters is optimal; very short documents may not have enough context
+    - **Language**: Primarily designed for English text; other languages may work but aren't guaranteed
+  </Accordion>
+  
+  <Accordion title="Reviewing Generated Ontologies">
+    After generation:
+    1. Review the `entity_types` array - are all entity categories relevant?
+    2. Review the `edge_types` array - do the relationships make sense?
+    3. Read the `analysis_summary` - does the LLM understand your domain correctly?
+    4. If the ontology isn't suitable, try:
+       - Refining your `simulation_requirement`
+       - Adding more specific `additional_context`
+       - Uploading more representative documents
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+After successfully generating an ontology:
+
+<Card title="Build the Graph" icon="diagram-project" href="/api/graph/build-graph">
+  Use the returned `project_id` to construct the actual knowledge graph from your documents.
+</Card>

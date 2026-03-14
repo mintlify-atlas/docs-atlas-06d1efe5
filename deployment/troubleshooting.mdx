@@ -1,0 +1,437 @@
+---
+title: 'Troubleshooting'
+description: 'Common deployment issues and solutions for MiroFish'
+---
+
+## Common Issues
+
+This guide covers the most common issues encountered when deploying MiroFish and their solutions.
+
+## API Key Issues
+
+### Missing API Keys
+
+**Symptom**: Error messages like "LLM_API_KEY not found" or "ZEP_API_KEY not found"
+
+**Cause**: Required environment variables are not configured in the `.env` file.
+
+**Solution**:
+
+<Steps>
+  <Step title="Verify .env file exists">
+    ```bash
+    # Check if .env exists in project root
+    ls -la .env
+    ```
+    
+    If the file doesn't exist, create it:
+    ```bash
+    cp .env.example .env
+    ```
+  </Step>
+
+  <Step title="Configure required variables">
+    Edit `.env` and add the required API keys:
+    
+    ```env
+    LLM_API_KEY=your_actual_api_key
+    LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+    LLM_MODEL_NAME=qwen-plus
+    ZEP_API_KEY=your_zep_api_key
+    ```
+  </Step>
+
+  <Step title="Restart the services">
+    ```bash
+    # For source deployment
+    npm run dev
+    
+    # For Docker deployment
+    docker compose down
+    docker compose up -d
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  See the [Environment Variables](/deployment/environment-variables) page for complete configuration details.
+</Note>
+
+### Invalid or Expired API Keys
+
+**Symptom**: Authentication errors or 401/403 HTTP responses from API calls
+
+**Solution**:
+
+1. **Verify API key validity**: Log into your provider's dashboard and check the API key status
+2. **Check for typos**: Ensure the API key was copied correctly without extra spaces or characters
+3. **Regenerate keys**: If expired, generate new API keys and update your `.env` file
+4. **Verify permissions**: Ensure the API key has the necessary permissions for the required operations
+
+### API Rate Limit Exceeded
+
+**Symptom**: Errors indicating rate limits or quota exceeded
+
+**Solution**:
+
+1. **Check usage limits**: Review your API provider's dashboard for current usage
+2. **Reduce simulation rounds**: Start with smaller simulations (less than 40 rounds)
+3. **Upgrade plan**: Consider upgrading to a higher tier if needed
+4. **Implement delays**: Add delays between API calls if running multiple simulations
+
+## Port Conflicts
+
+### Port Already in Use
+
+**Symptom**: Errors like "Port 3000 is already in use" or "EADDRINUSE: address already in use ::1:5001"
+
+**Cause**: Another application is using the required ports (3000 for frontend, 5001 for backend).
+
+**Solution**:
+
+<CodeGroup>
+```bash Find process using port (macOS/Linux)
+# Find process on port 3000
+lsof -ti:3000
+
+# Find process on port 5001
+lsof -ti:5001
+
+# Kill the process (replace PID with actual process ID)
+kill -9 PID
+```
+
+```bash Find process using port (Windows)
+# Find process on port 3000
+netstat -ano | findstr :3000
+
+# Find process on port 5001
+netstat -ano | findstr :5001
+
+# Kill the process (replace PID with actual process ID)
+taskkill /PID PID /F
+```
+</CodeGroup>
+
+**Alternative**: Change the port mappings:
+
+- **For Docker**: Edit `docker-compose.yml`
+  ```yaml
+  ports:
+    - "8080:3000"  # Use port 8080 instead of 3000
+    - "8081:5001"  # Use port 8081 instead of 5001
+  ```
+
+- **For source deployment**: Modify the frontend and backend configuration files
+
+## Dependency Installation Issues
+
+### Python Version Incompatibility
+
+**Symptom**: Errors during `npm run setup:backend` about Python version
+
+**Cause**: MiroFish requires Python ≥3.11 and ≤3.12. Python 3.13+ is not supported.
+
+**Solution**:
+
+<Steps>
+  <Step title="Check Python version">
+    ```bash
+    python --version
+    # or
+    python3 --version
+    ```
+  </Step>
+
+  <Step title="Install correct Python version">
+    If your version is incorrect, install Python 3.11 or 3.12:
+    
+    <CodeGroup>
+    ```bash macOS (using Homebrew)
+    brew install python@3.11
+    ```
+    
+    ```bash Ubuntu/Debian
+    sudo apt update
+    sudo apt install python3.11 python3.11-venv
+    ```
+    
+    ```bash Windows
+    # Download from https://www.python.org/downloads/
+    # Install Python 3.11 or 3.12
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Retry installation">
+    ```bash
+    npm run setup:backend
+    ```
+  </Step>
+</Steps>
+
+### Node.js Version Incompatibility
+
+**Symptom**: Errors during `npm run setup` about Node.js version
+
+**Cause**: MiroFish requires Node.js 18 or higher.
+
+**Solution**:
+
+<Steps>
+  <Step title="Check Node version">
+    ```bash
+    node -v
+    ```
+  </Step>
+
+  <Step title="Install/upgrade Node.js">
+    <CodeGroup>
+    ```bash Using nvm (recommended)
+    # Install nvm if not already installed
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+    
+    # Install Node 18+
+    nvm install 18
+    nvm use 18
+    ```
+    
+    ```bash macOS (using Homebrew)
+    brew install node@18
+    ```
+    
+    ```bash Windows
+    # Download from https://nodejs.org/
+    # Install LTS version (18+)
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Retry installation">
+    ```bash
+    npm run setup
+    ```
+  </Step>
+</Steps>
+
+### uv Not Found
+
+**Symptom**: Command not found: uv
+
+**Cause**: The `uv` Python package manager is not installed.
+
+**Solution**:
+
+```bash
+# Install uv (macOS/Linux)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install uv (Windows)
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Verify installation
+uv --version
+```
+
+## Docker Issues
+
+### Image Pull Failures
+
+**Symptom**: Timeout or network errors when pulling the Docker image
+
+**Solution**:
+
+1. **Use alternative registry**: Switch to the China mirror for faster downloads:
+   ```yaml
+   # In docker-compose.yml
+   image: ghcr.nju.edu.cn/666ghj/mirofish:latest
+   ```
+
+2. **Check Docker daemon**: Ensure Docker is running:
+   ```bash
+   docker info
+   ```
+
+3. **Configure Docker proxy**: If behind a corporate firewall, configure Docker to use a proxy
+
+### Container Won't Start
+
+**Symptom**: Container exits immediately or shows error status
+
+**Solution**:
+
+<Steps>
+  <Step title="Check container logs">
+    ```bash
+    docker compose logs
+    ```
+    
+    Look for specific error messages in the logs.
+  </Step>
+
+  <Step title="Verify .env configuration">
+    Ensure your `.env` file contains all required variables:
+    ```bash
+    cat .env | grep -E "LLM_API_KEY|ZEP_API_KEY"
+    ```
+  </Step>
+
+  <Step title="Check port availability">
+    Ensure ports 3000 and 5001 are not in use:
+    ```bash
+    # Stop any conflicting services
+    docker compose down
+    
+    # Restart
+    docker compose up -d
+    ```
+  </Step>
+</Steps>
+
+### Volume Permission Issues
+
+**Symptom**: Permission denied errors when accessing `/app/backend/uploads`
+
+**Solution**:
+
+```bash
+# Create uploads directory with correct permissions
+mkdir -p backend/uploads
+chmod 755 backend/uploads
+
+# Restart container
+docker compose restart
+```
+
+## Runtime Issues
+
+### Frontend Won't Load
+
+**Symptom**: Blank page or connection refused at http://localhost:3000
+
+**Solution**:
+
+<Steps>
+  <Step title="Check if frontend is running">
+    ```bash
+    # For source deployment
+    # Look for "frontend" output in npm run dev logs
+    
+    # For Docker
+    docker compose logs | grep frontend
+    ```
+  </Step>
+
+  <Step title="Verify port 3000 is accessible">
+    ```bash
+    curl http://localhost:3000
+    ```
+  </Step>
+
+  <Step title="Check browser console">
+    Open browser DevTools (F12) and check for JavaScript errors or network failures.
+  </Step>
+
+  <Step title="Clear cache and reload">
+    Clear browser cache or try incognito/private mode.
+  </Step>
+</Steps>
+
+### Backend API Not Responding
+
+**Symptom**: Frontend shows "Failed to fetch" or API connection errors
+
+**Solution**:
+
+<Steps>
+  <Step title="Verify backend is running">
+    ```bash
+    # Check if port 5001 is accessible
+    curl http://localhost:5001
+    ```
+  </Step>
+
+  <Step title="Check backend logs">
+    ```bash
+    # For source deployment
+    # Look for "backend" output in npm run dev logs
+    
+    # For Docker
+    docker compose logs | grep backend
+    ```
+  </Step>
+
+  <Step title="Verify environment variables">
+    Ensure all required API keys are configured correctly.
+  </Step>
+
+  <Step title="Restart backend service">
+    ```bash
+    # For source deployment
+    # Stop (Ctrl+C) and restart
+    npm run dev
+    
+    # For Docker
+    docker compose restart
+    ```
+  </Step>
+</Steps>
+
+### Simulation Failures
+
+**Symptom**: Simulations fail to start or crash mid-execution
+
+**Possible Causes & Solutions**:
+
+1. **API quota exceeded**: Check your LLM and Zep API usage limits
+2. **Invalid model name**: Verify `LLM_MODEL_NAME` matches your provider's available models
+3. **Network timeouts**: Check internet connectivity and API endpoint accessibility
+4. **Memory issues**: Large simulations may require more resources; try reducing simulation rounds
+
+<Warning>
+  Start with small simulations (less than 40 rounds) to test your setup before running larger experiments.
+</Warning>
+
+## Performance Issues
+
+### Slow Simulation Performance
+
+**Symptom**: Simulations take longer than expected
+
+**Solutions**:
+
+1. **Use faster LLM**: Configure `LLM_BOOST_*` variables with a faster model
+2. **Reduce agent count**: Fewer agents = faster simulations
+3. **Optimize round count**: Start with minimum viable rounds for testing
+4. **Check network latency**: Ensure stable, fast internet connection to API endpoints
+
+### High Memory Usage
+
+**Symptom**: System becomes slow or crashes during large simulations
+
+**Solutions**:
+
+1. **Increase system resources**: Allocate more RAM if possible
+2. **Use Docker memory limits**: Configure memory limits in `docker-compose.yml`
+3. **Reduce simulation scale**: Use fewer agents or shorter simulations
+4. **Monitor resource usage**: Use `docker stats` or system monitors to identify bottlenecks
+
+## Getting More Help
+
+If your issue isn't covered here:
+
+1. **Check the logs**: Detailed error messages are in the console or Docker logs
+2. **Review environment variables**: Ensure all required variables are correctly configured
+3. **Join the community**: 
+   - Discord: https://discord.com/channels/1469200078932545606/1469201282077163739
+   - GitHub Issues: https://github.com/666ghj/MiroFish/issues
+4. **Contact the team**: mirofish@shanda.com
+
+<Note>
+  When reporting issues, include:
+  - Deployment method (source or Docker)
+  - Operating system and version
+  - Node.js and Python versions
+  - Relevant error messages from logs
+  - Steps to reproduce the issue
+</Note>

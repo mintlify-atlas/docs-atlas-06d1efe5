@@ -1,0 +1,309 @@
+---
+title: "Financial Forecasting"
+description: "Predict market reactions, investor behavior, and financial trends using agent-based modeling"
+---
+
+## Overview
+
+Financial forecasting with MiroFish leverages multi-agent simulation to model complex market dynamics that traditional statistical methods often miss. By simulating thousands of investors, traders, analysts, and institutional players with diverse strategies and risk tolerances, MiroFish can predict market reactions to events, policy changes, and economic signals.
+
+<Note>
+This use case is valuable for investment firms, financial analysts, risk managers, and economic researchers.
+</Note>
+
+## Why Agent-Based Financial Modeling?
+
+Traditional financial models often assume rational actors and efficient markets. MiroFish captures the messy reality:
+
+<CardGroup cols={2}>
+  <Card title="Behavioral Economics" icon="brain">
+    Model fear, greed, herding behavior, and other psychological factors that drive real markets
+  </Card>
+  
+  <Card title="Network Effects" icon="diagram-project">
+    Capture how information and sentiment spread through social and professional networks
+  </Card>
+  
+  <Card title="Emergent Patterns" icon="wave-pulse">
+    Discover unexpected market dynamics that emerge from individual interactions
+  </Card>
+  
+  <Card title="Scenario Testing" icon="flask">
+    Test "what if" scenarios before committing capital in the real world
+  </Card>
+</CardGroup>
+
+## How It Works
+
+<Steps>
+  <Step title="Define Market Scenario">
+    Upload seed data about your forecasting scenario:
+    - Financial reports and earnings statements
+    - Economic indicators and policy announcements
+    - Market sentiment data from news and social media
+    - Historical price and volume data
+    - Analyst reports and forecasts
+  </Step>
+  
+  <Step title="Build Market Graph">
+    MiroFish constructs a knowledge graph containing:
+    - **Assets**: Stocks, bonds, commodities, currencies
+    - **Entities**: Companies, central banks, regulatory bodies
+    - **Relationships**: Correlations, dependencies, competitive dynamics
+    - **Events**: Earnings calls, policy decisions, market shocks
+  </Step>
+  
+  <Step title="Generate Market Participants">
+    The system creates diverse agent profiles:
+    
+    **Retail Investors**
+    - Various risk tolerances and time horizons
+    - Different information sources and biases
+    - Emotional and momentum-driven behavior
+    
+    **Institutional Traders**
+    - Algorithmic and fundamental strategies
+    - Large position sizes affecting market impact
+    - Access to premium information and analysis
+    
+    **Market Makers**
+    - Liquidity provision and spread management
+    - Inventory and risk management
+    
+    **Analysts & Influencers**
+    - Research publication and recommendations
+    - Social media presence and follower networks
+  </Step>
+  
+  <Step title="Run Market Simulation">
+    Agents interact in a simulated marketplace:
+    - Place orders based on their strategies and signals
+    - React to price movements and news
+    - Share opinions and analysis on social platforms
+    - Update beliefs based on market feedback
+    - Adjust positions and risk exposure
+  </Step>
+  
+  <Step title="Extract Insights">
+    The ReportAgent analyzes outcomes:
+    - Price trajectory predictions
+    - Volatility and risk forecasts
+    - Key price levels and support/resistance
+    - Sentiment shifts and their market impact
+    - Identifying likely market scenarios
+  </Step>
+</Steps>
+
+## Prediction Scenarios
+
+### Earnings Announcement Impact
+
+Predict how the market will react to an upcoming earnings report:
+- Model different earnings outcomes (beat/meet/miss expectations)
+- Simulate analyst reactions and rating changes
+- Forecast the range of price movements
+- Identify key sentiment drivers
+
+### Policy Change Effects
+
+Forecast market response to regulatory or monetary policy changes:
+- Interest rate decisions by central banks
+- New financial regulations
+- Trade policy announcements
+- Tax law modifications
+
+### Market Event Simulation
+
+Model the dynamics of complex market events:
+- IPO pricing and first-day performance
+- Merger & acquisition announcements
+- Corporate restructurings
+- Geopolitical developments
+
+### Portfolio Stress Testing
+
+Test how investment portfolios might perform under various scenarios:
+- Market crash simulations
+- Sector rotation dynamics
+- Correlation breakdown events
+- Black swan event preparation
+
+## Setup Example
+
+```python
+# Example configuration for financial forecasting
+simulation_config = {
+    "scenario_type": "financial_market",
+    "asset_class": "equities",
+    "focus_ticker": "TECH-001",
+    "agent_distribution": {
+        "retail_investors": 150,
+        "institutional_traders": 30,
+        "market_makers": 10,
+        "analysts": 10
+    },
+    "simulation_rounds": 60,
+    "event_trigger": {
+        "type": "earnings_release",
+        "timing": "round_30",
+        "scenarios": ["beat", "meet", "miss"]
+    },
+    "seed_data": "tech_sector_analysis.pdf",
+    "analysis_focus": [
+        "price_prediction",
+        "volatility_forecast",
+        "sentiment_impact"
+    ]
+}
+```
+
+## Key Insights You Can Gain
+
+<CardGroup cols={2}>
+  <Card title="Price Predictions" icon="chart-candlestick">
+    Forecast likely price ranges and trajectories based on agent trading behavior
+  </Card>
+  
+  <Card title="Volatility Forecasts" icon="wave-pulse">
+    Predict periods of high volatility and market turbulence
+  </Card>
+  
+  <Card title="Sentiment Analysis" icon="comments">
+    Track how market sentiment evolves and influences price action
+  </Card>
+  
+  <Card title="Risk Assessment" icon="shield-halved">
+    Identify tail risks and unlikely but high-impact scenarios
+  </Card>
+  
+  <Card title="Liquidity Dynamics" icon="droplet">
+    Understand how liquidity might dry up during stress
+  </Card>
+  
+  <Card title="Contagion Effects" icon="virus">
+    Model how shocks spread across correlated assets
+  </Card>
+</CardGroup>
+
+## Advanced Features
+
+### Multi-Asset Simulation
+
+Simulate interconnected markets to capture:
+- Cross-asset correlations
+- Flight-to-quality dynamics
+- Sector rotation patterns
+- Currency and commodity impacts
+
+### Adaptive Agent Learning
+
+Agents can adapt their strategies based on:
+- Trading outcomes and P&L
+- Market regime changes
+- New information and signals
+- Peer behavior observation
+
+### High-Frequency Dynamics
+
+Model intraday trading patterns:
+- Opening and closing dynamics
+- News reaction speed
+- Algorithmic trading effects
+- Liquidity fluctuations
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Rich Market Data">
+    Include historical price data, volume patterns, and sentiment indicators in your seed data. More context leads to more accurate agent behavior modeling.
+  </Accordion>
+  
+  <Accordion title="Calibrate Agent Distribution">
+    Match your agent distribution to real market composition. For example, institutional traders may be fewer in number but control larger positions.
+  </Accordion>
+  
+  <Accordion title="Run Multiple Scenarios">
+    Don't rely on a single simulation. Run multiple scenarios with different assumptions to understand the range of possible outcomes.
+  </Accordion>
+  
+  <Accordion title="Validate with History">
+    Test your simulations against historical events to validate that agents behave realistically.
+  </Accordion>
+  
+  <Accordion title="Monitor API Costs">
+    Financial simulations with many agents can consume significant API resources. Start with smaller simulations (40-60 rounds) before scaling up.
+  </Accordion>
+</AccordionGroup>
+
+## Typical Workflow
+
+1. **Define the prediction question** (e.g., "How will the market react to Q3 earnings?")
+2. **Gather seed data** from financial reports, market data, and sentiment sources
+3. **Configure agent distribution** to match relevant market participants
+4. **Set up event triggers** for the scenario you want to test
+5. **Run baseline simulation** to establish expected outcomes
+6. **Test variations** by injecting different variables or news
+7. **Analyze results** focusing on price ranges, volatility, and sentiment
+8. **Interview agents** to understand trading rationales
+9. **Generate investment insights** and risk assessments
+
+## Integration with Investment Workflows
+
+### Pre-Trade Analysis
+
+Use MiroFish before making investment decisions:
+- Assess likely market reception of a position
+- Identify optimal entry and exit points
+- Size positions based on predicted volatility
+
+### Risk Management
+
+Enhance risk frameworks:
+- Stress test portfolios against simulated scenarios
+- Identify correlation breakdown risks
+- Prepare for tail events
+
+### Strategy Development
+
+Backtest and refine trading strategies:
+- Test strategies against simulated markets
+- Optimize parameters based on agent behavior
+- Discover new alpha opportunities
+
+## Limitations and Considerations
+
+<Warning>
+While MiroFish provides valuable insights, it should complement—not replace—traditional financial analysis:
+- Simulations are models, not guarantees of future performance
+- Agent behavior is based on LLM understanding, which may not capture all market nuances
+- Start with paper trading or small positions when acting on simulation insights
+- Use MiroFish as one input among many in your decision-making process
+</Warning>
+
+## Coming Soon
+
+We're preparing detailed case studies of financial forecasting simulations. Check back soon for:
+- Stock market reaction predictions
+- Cryptocurrency sentiment analysis
+- Commodity price forecasting
+- Fixed income market dynamics
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Get Started" icon="rocket" href="/quickstart">
+    Set up MiroFish and run your first financial simulation
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api/introduction">
+    Integrate MiroFish into your trading systems and workflows
+  </Card>
+  
+  <Card title="Public Opinion Analysis" icon="users" href="/use-cases/public-opinion-analysis">
+    Understand how market sentiment forms and spreads
+  </Card>
+  
+  <Card title="Policy Testing" icon="balance-scale" href="/use-cases/policy-testing">
+    Model the market impact of regulatory changes
+  </Card>
+</CardGroup>

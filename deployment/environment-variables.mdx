@@ -1,0 +1,221 @@
+---
+title: 'Environment Variables'
+description: 'Complete reference for all MiroFish environment variables'
+---
+
+## Overview
+
+MiroFish uses environment variables to configure API connections, model settings, and optional features. All variables should be defined in a `.env` file in the project root directory.
+
+<Note>
+  Create your `.env` file by copying the example: `cp .env.example .env`
+</Note>
+
+## Required Variables
+
+These variables **must** be configured for MiroFish to function:
+
+### LLM API Configuration
+
+MiroFish supports any LLM API compatible with the OpenAI SDK format.
+
+```env
+LLM_API_KEY=your_api_key_here
+LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+LLM_MODEL_NAME=qwen-plus
+```
+
+| Variable | Description | Example Value |
+|----------|-------------|---------------|
+| `LLM_API_KEY` | API key for your LLM service | `sk-xxxxxxxxxxxx` |
+| `LLM_BASE_URL` | Base URL for the LLM API endpoint | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| `LLM_MODEL_NAME` | Model identifier to use | `qwen-plus` |
+
+<Warning>
+  **Recommended Configuration**: Use Alibaba Cloud's Bailian Platform with the `qwen-plus` model for optimal results: https://bailian.console.aliyun.com/
+</Warning>
+
+<Note>
+  **Cost Warning**: MiroFish simulations can consume significant API tokens. Start with simulations of less than 40 rounds to estimate costs before running larger experiments.
+</Note>
+
+### Zep Memory Graph Configuration
+
+Zep provides the memory and knowledge graph infrastructure for MiroFish agents.
+
+```env
+ZEP_API_KEY=your_zep_api_key_here
+```
+
+| Variable | Description | Example Value |
+|----------|-------------|---------------|
+| `ZEP_API_KEY` | API key for Zep Cloud service | `z_xxxxxxxxxxxx` |
+
+<Note>
+  Get your free Zep API key at https://app.getzep.com/. The free tier is sufficient for basic usage.
+</Note>
+
+## Optional Variables
+
+### LLM Boost Configuration
+
+For advanced users who want to use a separate, faster LLM for specific tasks, you can configure optional boost settings:
+
+```env
+LLM_BOOST_API_KEY=your_api_key_here
+LLM_BOOST_BASE_URL=your_base_url_here
+LLM_BOOST_MODEL_NAME=your_model_name_here
+```
+
+| Variable | Description | Example Value |
+|----------|-------------|---------------|
+| `LLM_BOOST_API_KEY` | API key for the boost LLM service | `sk-xxxxxxxxxxxx` |
+| `LLM_BOOST_BASE_URL` | Base URL for the boost LLM API | `https://api.openai.com/v1` |
+| `LLM_BOOST_MODEL_NAME` | Boost model identifier | `gpt-4-turbo` |
+
+<Warning>
+  **Important**: If you're not using the boost configuration, **do not include these variables** in your `.env` file. Including them with empty or placeholder values may cause errors.
+</Warning>
+
+## Configuration Examples
+
+### Minimal Configuration (Alibaba Bailian + Zep)
+
+```env
+# LLM API配置
+LLM_API_KEY=sk-abc123def456
+LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+LLM_MODEL_NAME=qwen-plus
+
+# Zep配置
+ZEP_API_KEY=z_xyz789uvw012
+```
+
+### Advanced Configuration with Boost LLM
+
+```env
+# Primary LLM (Alibaba Qwen)
+LLM_API_KEY=sk-abc123def456
+LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+LLM_MODEL_NAME=qwen-plus
+
+# Zep Memory
+ZEP_API_KEY=z_xyz789uvw012
+
+# Boost LLM (OpenAI GPT-4)
+LLM_BOOST_API_KEY=sk-proj-xyz123abc456
+LLM_BOOST_BASE_URL=https://api.openai.com/v1
+LLM_BOOST_MODEL_NAME=gpt-4-turbo
+```
+
+### Using OpenAI as Primary LLM
+
+```env
+# LLM API配置 (OpenAI)
+LLM_API_KEY=sk-proj-abc123xyz789
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL_NAME=gpt-4-turbo
+
+# Zep配置
+ZEP_API_KEY=z_xyz789uvw012
+```
+
+## Supported LLM Providers
+
+MiroFish is compatible with any LLM provider that implements the OpenAI SDK format, including:
+
+- **Alibaba Cloud Bailian** (Recommended for Chinese users)
+- **OpenAI** (GPT-3.5, GPT-4, GPT-4 Turbo)
+- **Azure OpenAI**
+- **Anthropic Claude** (via compatible proxy)
+- **Local models** via LM Studio, Ollama, or other OpenAI-compatible servers
+- **Other cloud providers** with OpenAI-compatible endpoints
+
+<Note>
+  When using alternative providers, ensure you set the correct `LLM_BASE_URL` and `LLM_MODEL_NAME` for your chosen service.
+</Note>
+
+## Environment Variable Loading
+
+MiroFish loads environment variables from the `.env` file in the following scenarios:
+
+### Source Code Deployment
+
+The `.env` file is automatically loaded when running:
+- `npm run dev`
+- `npm run backend`
+- Any Python script in the backend
+
+### Docker Deployment
+
+The `.env` file is specified in `docker-compose.yml`:
+
+```yaml
+services:
+  mirofish:
+    env_file:
+      - .env
+```
+
+The container reads the `.env` file from the host machine at startup.
+
+## Security Best Practices
+
+<Warning>
+  **Never commit your `.env` file to version control!** The `.env` file contains sensitive API keys and should be kept private.
+</Warning>
+
+1. **Keep `.env` private**: Ensure `.env` is listed in `.gitignore`
+2. **Use strong API keys**: Rotate keys regularly and use keys with minimal required permissions
+3. **Separate environments**: Use different `.env` files for development, staging, and production
+4. **Monitor usage**: Track API usage to detect unauthorized access
+5. **Restrict access**: Limit who has access to production `.env` files
+
+## Troubleshooting
+
+### Missing API Keys Error
+
+If you see errors about missing API keys:
+
+```
+Error: LLM_API_KEY not found in environment
+```
+
+**Solution**: Ensure your `.env` file exists and contains all required variables:
+
+```bash
+# Check if .env exists
+ls -la .env
+
+# Verify it contains your keys (be careful not to expose them)
+cat .env | grep -E "LLM_API_KEY|ZEP_API_KEY"
+```
+
+### Boost Configuration Errors
+
+If you encounter errors related to boost configuration:
+
+```
+Error: Invalid LLM_BOOST_BASE_URL
+```
+
+**Solution**: Either:
+1. Remove all `LLM_BOOST_*` variables from your `.env` file if you're not using boost, OR
+2. Ensure all three boost variables are properly configured with valid values
+
+### API Connection Failures
+
+If the LLM or Zep API connections fail:
+
+1. **Verify API keys are valid**: Check your provider's dashboard
+2. **Check base URLs**: Ensure URLs are correct and accessible
+3. **Test connectivity**: Try accessing the API endpoint directly
+4. **Review quotas**: Ensure you haven't exceeded API rate limits
+
+See the [Troubleshooting](/deployment/troubleshooting) page for more common issues.
+
+## Next Steps
+
+- Review [Source Code Deployment](/deployment/source-code) to get started
+- Explore [Docker Deployment](/deployment/docker) for containerized setup
+- Check [Troubleshooting](/deployment/troubleshooting) for common issues

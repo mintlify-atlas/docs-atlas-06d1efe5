@@ -1,0 +1,241 @@
+---
+title: Authentication
+description: API authentication and security considerations for MiroFish
+---
+
+## Current Authentication
+
+The MiroFish API **currently does not require authentication** for local deployment scenarios. All endpoints are accessible without API keys or tokens when running on `localhost:5001`.
+
+<Note>
+  This is designed for local development and testing environments. For production deployments, authentication should be implemented.
+</Note>
+
+## Security Considerations
+
+### Local Deployment
+
+For local development, the API binds to `localhost` only:
+
+```python Flask Configuration
+app.run(host='localhost', port=5001)
+```
+
+This prevents external network access, limiting API calls to:
+- The same machine running the backend
+- The frontend application (typically on `localhost:3000`)
+- Local development tools (curl, Postman, etc.)
+
+### CORS Configuration
+
+The API enables CORS for frontend integration:
+
+```python CORS Settings
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "*"  # All origins allowed for local dev
+    }
+})
+```
+
+<Card title="CORS Scope" icon="shield-check">
+  CORS is only applied to `/api/*` routes. The health check endpoint (`/health`) operates independently.
+</Card>
+
+## Required API Keys
+
+While MiroFish doesn't require user authentication, it **does require** third-party service API keys configured in your `.env` file:
+
+### 1. LLM API Key
+
+```bash .env
+LLM_API_KEY=sk-your-openai-api-key
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL_NAME=gpt-4o-mini
+```
+
+**Purpose**: Powers AI-driven features including:
+- Ontology generation from documents
+- Agent profile creation
+- Simulation configuration
+- Report generation
+
+**Compatible Services**:
+- OpenAI API
+- Azure OpenAI
+- Any OpenAI-compatible endpoint (LM Studio, Ollama with OpenAI adapter, etc.)
+
+### 2. Zep API Key
+
+```bash .env
+ZEP_API_KEY=z_your-zep-api-key
+```
+
+**Purpose**: Knowledge graph storage and retrieval:
+- Graph construction and management
+- Entity and relationship storage
+- Semantic search
+- Graph-based reasoning
+
+<Note>
+  Without these API keys, the backend will start but most operations will fail. The `/api/graph/build` and `/api/simulation/prepare` endpoints explicitly check for these keys.
+</Note>
+
+## API Key Validation
+
+The API validates required keys on critical operations:
+
+```python Validation Example
+@graph_bp.route('/build', methods=['POST'])
+def build_graph():
+    # Check configuration
+    errors = []
+    if not Config.ZEP_API_KEY:
+        errors.append("ZEP_API_KEY未配置")
+    if errors:
+        return jsonify({
+            "success": False,
+            "error": "配置错误: " + "; ".join(errors)
+        }), 500
+    # ... proceed with operation
+```
+
+## Future Authentication
+
+For production deployments, consider implementing:
+
+### API Key Authentication
+
+```http Example Request Header
+GET /api/graph/project/proj_abc123
+Authorization: Bearer your-api-key-here
+```
+
+Implementation approach:
+1. Generate API keys for each user/client
+2. Store hashed keys in database
+3. Validate via middleware before processing requests
+4. Support key rotation and expiration
+
+### JWT Token Authentication
+
+```http Example Flow
+// 1. Login
+POST /api/auth/login
+{"username": "user", "password": "pass"}
+→ Returns: {"token": "eyJhbGciOi..."}
+
+// 2. Use token
+GET /api/graph/project/proj_abc123
+Authorization: Bearer eyJhbGciOi...
+```
+
+Implementation approach:
+1. User login generates JWT token
+2. Token includes user ID and permissions
+3. Middleware validates and decodes token
+4. Tokens expire after set duration
+
+### Role-Based Access Control (RBAC)
+
+```python Future Permission Model
+Permissions:
+- READ_PROJECTS: View projects and graphs
+- WRITE_PROJECTS: Create and modify projects
+- RUN_SIMULATIONS: Execute simulations
+- GENERATE_REPORTS: Create analytical reports
+- ADMIN: Full system access
+```
+
+## Network Security
+
+### Development
+
+```bash Current Setup
+Host: localhost
+Port: 5001
+Access: Local machine only
+```
+
+### Production Recommendations
+
+<CardGroup cols={2}>
+  <Card title="HTTPS/TLS" icon="lock">
+    Encrypt all API traffic with SSL certificates
+  </Card>
+  
+  <Card title="Firewall Rules" icon="shield">
+    Restrict API access to authorized IPs/networks
+  </Card>
+  
+  <Card title="Rate Limiting" icon="gauge-high">
+    Prevent abuse with request throttling
+  </Card>
+  
+  <Card title="Reverse Proxy" icon="server">
+    Use nginx/Apache for additional security layers
+  </Card>
+</CardGroup>
+
+## Environment Variables Security
+
+<Warning>
+  **Never commit `.env` files to version control!** 
+  
+  API keys and secrets should be:
+  - Stored in `.env` (gitignored)
+  - Managed via environment variables in production
+  - Rotated periodically
+  - Restricted to minimum required permissions
+</Warning>
+
+### Example `.env.example`
+
+```bash Template for new deployments
+# LLM Configuration (required)
+LLM_API_KEY=your-openai-api-key-here
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL_NAME=gpt-4o-mini
+
+# Zep Configuration (required)
+ZEP_API_KEY=your-zep-api-key-here
+
+# Flask Configuration
+FLASK_DEBUG=True
+SECRET_KEY=your-secret-key-for-sessions
+
+# OASIS Simulation
+OASIS_DEFAULT_MAX_ROUNDS=10
+```
+
+## Data Privacy
+
+### Uploaded Documents
+
+- Stored locally in `backend/uploads/`
+- Organized by project ID
+- Not shared with external services (except text sent to LLM for processing)
+
+### Knowledge Graphs
+
+- Stored in Zep cloud service
+- Subject to Zep's privacy policy and data handling
+- Can be deleted via API: `DELETE /api/graph/delete/{graph_id}`
+
+### Simulation Data
+
+- Stored locally in `backend/uploads/simulations/`
+- Includes agent profiles and simulation logs
+- Not transmitted outside localhost
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Graph API" icon="diagram-project" href="/api/graph/overview">
+    Build knowledge graphs from documents
+  </Card>
+  
+  <Card title="Simulation API" icon="users" href="/api/simulation/overview">
+    Create and run social simulations
+  </Card>
+</CardGroup>

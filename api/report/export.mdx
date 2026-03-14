@@ -1,0 +1,396 @@
+---
+title: "Export Report"
+description: "Download and export simulation reports in various formats"
+---
+
+## GET /api/report/{report_id}/download
+
+Download a generated report as a Markdown file. This endpoint returns the complete report content as a downloadable file attachment.
+
+<Info>
+Currently, reports are exported in Markdown (`.md`) format. Future versions may support additional formats like PDF, DOCX, or HTML.
+</Info>
+
+## Endpoint
+
+```
+GET /api/report/{report_id}/download
+```
+
+### Path Parameters
+
+<ParamField path="report_id" type="string" required>
+  The unique identifier of the report to download (format: `report_xxxx`)
+</ParamField>
+
+## Request Example
+
+<CodeGroup>
+```bash cURL
+curl -X GET http://localhost:5000/api/report/report_x9y8z7w6v5u4/download \
+  -o simulation_report.md
+```
+
+```python Python
+import requests
+
+report_id = "report_x9y8z7w6v5u4"
+response = requests.get(
+    f"http://localhost:5000/api/report/{report_id}/download"
+)
+
+if response.ok:
+    # Save to file
+    with open(f"{report_id}.md", "wb") as f:
+        f.write(response.content)
+    print(f"Report downloaded: {report_id}.md")
+else:
+    print(f"Error: {response.json()['error']}")
+```
+
+```javascript JavaScript
+const reportId = 'report_x9y8z7w6v5u4';
+
+fetch(`http://localhost:5000/api/report/${reportId}/download`)
+  .then(response => {
+    if (!response.ok) throw new Error('Download failed');
+    return response.blob();
+  })
+  .then(blob => {
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${reportId}.md`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  });
+```
+
+```go Go
+package main
+
+import (
+    "fmt"
+    "io"
+    "net/http"
+    "os"
+)
+
+func downloadReport(reportID string) error {
+    url := fmt.Sprintf("http://localhost:5000/api/report/%s/download", reportID)
+    
+    resp, err := http.Get(url)
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+    
+    if resp.StatusCode != 200 {
+        return fmt.Errorf("download failed: %s", resp.Status)
+    }
+    
+    // Create file
+    file, err := os.Create(reportID + ".md")
+    if err != nil {
+        return err
+    }
+    defer file.Close()
+    
+    // Write content
+    _, err = io.Copy(file, resp.Body)
+    return err
+}
+```
+</CodeGroup>
+
+## Response
+
+### Success Response
+
+**Content-Type**: `text/markdown; charset=utf-8`
+
+**Content-Disposition**: `attachment; filename="{report_id}.md"`
+
+**Body**: Raw Markdown file content
+
+```markdown
+# 模拟分析报告
+
+**报告ID**: report_x9y8z7w6v5u4
+**模拟ID**: sim_a1b2c3d4e5f6
+**生成时间**: 2026-03-14 10:35:22
+
+---
+
+## 执行摘要
+
+本次模拟针对公共卫生事件的社交媒体舆情传播进行了分析...
+
+### 关键发现
+
+1. **快速传播**: 事件发生后2小时内,相关话题阅读量突破1000万
+2. **情感极化**: 讨论呈现明显的情感两极分化,负面情绪占比62%
+3. **关键节点**: 3个核心意见领袖的转发引发了80%的二次传播
+
+...
+```
+
+## Alternative: Get Report JSON
+
+If you need the report data in JSON format instead of a file download, use:
+
+### GET /api/report/{report_id}
+
+```bash
+curl -X GET http://localhost:5000/api/report/report_x9y8z7w6v5u4
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "report_id": "report_x9y8z7w6v5u4",
+    "simulation_id": "sim_a1b2c3d4e5f6",
+    "status": "completed",
+    "markdown_content": "# 模拟分析报告\n\n...",
+    "outline": {
+      "sections": [
+        {"title": "执行摘要", "index": 1},
+        {"title": "模拟背景", "index": 2},
+        {"title": "关键发现", "index": 3}
+      ]
+    },
+    "created_at": "2026-03-14T10:30:00Z",
+    "completed_at": "2026-03-14T10:35:22Z"
+  }
+}
+```
+
+<ResponseField name="markdown_content" type="string">
+  The complete report content in Markdown format as a JSON string
+</ResponseField>
+
+<ResponseField name="outline" type="object">
+  The structural outline of the report with section titles and indices
+</ResponseField>
+
+## Error Responses
+
+### Report Not Found
+
+```json
+{
+  "success": false,
+  "error": "报告不存在: report_invalid123"
+}
+```
+**Status Code**: `404`
+
+### Report Not Completed
+
+If you try to download a report that's still being generated, you'll get the JSON response but the `status` will indicate it's incomplete:
+
+```json
+{
+  "success": true,
+  "data": {
+    "report_id": "report_x9y8z7w6v5u4",
+    "status": "generating",
+    "markdown_content": null
+  }
+}
+```
+
+<Warning>
+Ensure the report status is `completed` before attempting to download. Check status with `GET /api/report/{report_id}` or `POST /api/report/generate/status`.
+</Warning>
+
+## Additional Endpoints
+
+### List All Reports
+
+**GET /api/report/list**
+
+Retrieve a list of all generated reports, optionally filtered by simulation.
+
+**Query Parameters**:
+- `simulation_id` (optional): Filter by simulation ID
+- `limit` (optional): Maximum number of reports to return (default: 50)
+
+```bash
+curl "http://localhost:5000/api/report/list?simulation_id=sim_a1b2c3d4e5f6&limit=10"
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "report_id": "report_x9y8z7w6v5u4",
+      "simulation_id": "sim_a1b2c3d4e5f6",
+      "status": "completed",
+      "created_at": "2026-03-14T10:30:00Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+### Get Report by Simulation
+
+**GET /api/report/by-simulation/{simulation_id}**
+
+Retrieve the report associated with a specific simulation.
+
+```bash
+curl http://localhost:5000/api/report/by-simulation/sim_a1b2c3d4e5f6
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "report_id": "report_x9y8z7w6v5u4",
+    "simulation_id": "sim_a1b2c3d4e5f6",
+    "status": "completed",
+    "markdown_content": "..."
+  },
+  "has_report": true
+}
+```
+
+### Delete Report
+
+**DELETE /api/report/{report_id}**
+
+Permanently delete a report and its associated files.
+
+```bash
+curl -X DELETE http://localhost:5000/api/report/report_x9y8z7w6v5u4
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "message": "报告已删除: report_x9y8z7w6v5u4"
+}
+```
+
+<Warning>
+Deletion is permanent and cannot be undone. Make sure to download and backup reports before deletion.
+</Warning>
+
+## Download Full Implementation
+
+<CodeGroup>
+```python Complete Download Function
+import requests
+from pathlib import Path
+from typing import Optional
+
+def download_report(
+    report_id: str,
+    output_dir: str = ".",
+    filename: Optional[str] = None,
+    base_url: str = "http://localhost:5000"
+) -> Path:
+    """
+    Download a report and save to disk
+    
+    Args:
+        report_id: The report ID to download
+        output_dir: Directory to save the file (default: current directory)
+        filename: Custom filename (default: {report_id}.md)
+        base_url: API base URL
+    
+    Returns:
+        Path object pointing to the downloaded file
+    
+    Raises:
+        Exception: If download fails or report doesn't exist
+    """
+    # First check if report is completed
+    check_response = requests.get(f"{base_url}/api/report/{report_id}")
+    
+    if not check_response.ok:
+        error = check_response.json().get("error", "Unknown error")
+        raise Exception(f"Failed to check report: {error}")
+    
+    report_data = check_response.json()["data"]
+    
+    if report_data["status"] != "completed":
+        raise Exception(
+            f"Report is not ready. Status: {report_data['status']}. "
+            "Please wait for generation to complete."
+        )
+    
+    # Download the report
+    download_response = requests.get(
+        f"{base_url}/api/report/{report_id}/download",
+        stream=True
+    )
+    
+    if not download_response.ok:
+        error = download_response.json().get("error", "Download failed")
+        raise Exception(f"Download error: {error}")
+    
+    # Determine filename
+    if filename is None:
+        filename = f"{report_id}.md"
+    
+    # Save to disk
+    output_path = Path(output_dir) / filename
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    with open(output_path, "wb") as f:
+        for chunk in download_response.iter_content(chunk_size=8192):
+            f.write(chunk)
+    
+    print(f"✓ Report downloaded: {output_path}")
+    print(f"  Size: {output_path.stat().st_size:,} bytes")
+    
+    return output_path
+
+# Usage
+try:
+    filepath = download_report(
+        report_id="report_x9y8z7w6v5u4",
+        output_dir="./reports",
+        filename="simulation_analysis.md"
+    )
+    print(f"Success! File saved to: {filepath}")
+except Exception as e:
+    print(f"Error: {e}")
+```
+</CodeGroup>
+
+## Future Format Support
+
+Planned export formats for future releases:
+
+<CardGroup cols={2}>
+  <Card title="PDF Export" icon="file-pdf">
+    Professional PDF reports with custom styling and embedded charts
+  </Card>
+  
+  <Card title="DOCX Export" icon="file-word">
+    Microsoft Word format for easy editing and collaboration
+  </Card>
+  
+  <Card title="HTML Export" icon="file-code">
+    Standalone HTML with interactive visualizations
+  </Card>
+  
+  <Card title="JSON Export" icon="brackets-curly">
+    Structured data export for programmatic processing
+  </Card>
+</CardGroup>

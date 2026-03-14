@@ -1,0 +1,283 @@
+---
+title: Entity Management
+description: Read and filter entities from knowledge graphs for simulation
+---
+
+## Get Graph Entities
+
+Retrieve all entities from a knowledge graph with optional filtering.
+
+<CodeGroup>
+```bash GET /api/simulation/entities/{graph_id}
+curl "http://localhost:5000/api/simulation/entities/mirofish_abc123?entity_types=Student,Professor&enrich=true"
+```
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="graph_id" type="string" required>
+  The Zep knowledge graph ID (e.g., `mirofish_abc123`)
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="entity_types" type="string">
+  Comma-separated list of entity types to filter (e.g., `Student,Professor,PublicFigure`)
+  
+  If omitted, returns all defined entity types.
+</ParamField>
+
+<ParamField query="enrich" type="boolean" default="true">
+  Whether to include relationship edge information for each entity
+  
+  Set to `false` for faster queries when only entity counts are needed.
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Entity data object
+  
+  <ResponseField name="data.filtered_count" type="integer">
+    Number of entities returned after filtering
+  </ResponseField>
+  
+  <ResponseField name="data.total_count" type="integer">
+    Total number of entities in the graph
+  </ResponseField>
+  
+  <ResponseField name="data.entity_types" type="array">
+    List of entity types found
+  </ResponseField>
+  
+  <ResponseField name="data.entities" type="array">
+    Array of entity objects
+    
+    <ResponseField name="data.entities[].uuid" type="string">
+      Unique entity identifier
+    </ResponseField>
+    
+    <ResponseField name="data.entities[].name" type="string">
+      Entity name
+    </ResponseField>
+    
+    <ResponseField name="data.entities[].labels" type="array">
+      Entity type labels
+    </ResponseField>
+    
+    <ResponseField name="data.entities[].properties" type="object">
+      Entity properties and attributes
+    </ResponseField>
+    
+    <ResponseField name="data.entities[].edges" type="array">
+      Related edges (if `enrich=true`)
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "filtered_count": 68,
+    "total_count": 120,
+    "entity_types": ["Student", "Professor"],
+    "entities": [
+      {
+        "uuid": "550e8400-e29b-41d4-a716-446655440000",
+        "name": "Zhang Wei",
+        "labels": ["Entity", "Student"],
+        "properties": {
+          "age": 20,
+          "major": "Computer Science",
+          "year": "Junior"
+        },
+        "edges": [
+          {
+            "relation": "STUDIES_AT",
+            "target": "Wuhan University"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Get Entity Detail
+
+Retrieve detailed information for a single entity including full context.
+
+<CodeGroup>
+```bash GET /api/simulation/entities/{graph_id}/{entity_uuid}
+curl "http://localhost:5000/api/simulation/entities/mirofish_abc123/550e8400-e29b-41d4-a716-446655440000"
+```
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="graph_id" type="string" required>
+  The Zep knowledge graph ID
+</ParamField>
+
+<ParamField path="entity_uuid" type="string" required>
+  The entity UUID
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Entity object with full context including all relationships and properties
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Zhang Wei",
+    "labels": ["Entity", "Student"],
+    "properties": {
+      "age": 20,
+      "major": "Computer Science",
+      "interests": ["AI", "Open Source"]
+    },
+    "edges": [
+      {
+        "relation": "STUDIES_AT",
+        "target": "Wuhan University",
+        "properties": {}
+      },
+      {
+        "relation": "FRIENDS_WITH",
+        "target": "Li Ming",
+        "properties": {"since": "2023"}
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Get Entities By Type
+
+Retrieve all entities of a specific type.
+
+<CodeGroup>
+```bash GET /api/simulation/entities/{graph_id}/by-type/{entity_type}
+curl "http://localhost:5000/api/simulation/entities/mirofish_abc123/by-type/Student?enrich=true"
+```
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="graph_id" type="string" required>
+  The Zep knowledge graph ID
+</ParamField>
+
+<ParamField path="entity_type" type="string" required>
+  The entity type to filter (e.g., `Student`, `Professor`, `PublicFigure`)
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="enrich" type="boolean" default="true">
+  Whether to include relationship edge information
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="data.entity_type" type="string">
+    The requested entity type
+  </ResponseField>
+  
+  <ResponseField name="data.count" type="integer">
+    Number of entities found
+  </ResponseField>
+  
+  <ResponseField name="data.entities" type="array">
+    Array of entity objects
+  </ResponseField>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "entity_type": "Student",
+    "count": 45,
+    "entities": [
+      {
+        "uuid": "550e8400-e29b-41d4-a716-446655440000",
+        "name": "Zhang Wei",
+        "labels": ["Entity", "Student"],
+        "properties": {
+          "age": 20,
+          "major": "Computer Science"
+        }
+      }
+    ]
+  }
+}
+```
+
+## Error Responses
+
+<ResponseField name="success" type="boolean">
+  `false` when an error occurs
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message describing what went wrong
+</ResponseField>
+
+<ResponseField name="traceback" type="string">
+  Python traceback (only in development mode)
+</ResponseField>
+
+### Common Errors
+
+**500 - ZEP_API_KEY Not Configured**
+```json
+{
+  "success": false,
+  "error": "ZEP_API_KEY未配置"
+}
+```
+
+**404 - Entity Not Found**
+```json
+{
+  "success": false,
+  "error": "实体不存在: 550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+## Usage Notes
+
+- These endpoints require `ZEP_API_KEY` to be configured in your environment
+- The `enrich` parameter significantly affects query performance - use `false` for count-only queries
+- Entity types must match the predefined types in your knowledge graph schema
+- Large graphs may take several seconds to query with enrichment enabled

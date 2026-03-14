@@ -1,0 +1,517 @@
+---
+title: Interview Agents
+description: Interactive interviews with simulation agents during or after runtime
+---
+
+## Interview Single Agent
+
+Ask a question to a specific agent and get a response based on their persona and simulation history.
+
+<CodeGroup>
+```bash POST /api/simulation/interview
+curl -X POST http://localhost:5000/api/simulation/interview \
+  -H "Content-Type: application/json" \
+  -d '{
+    "simulation_id": "sim_abc123",
+    "agent_id": 0,
+    "prompt": "What do you think about this issue?",
+    "platform": "twitter",
+    "timeout": 60
+  }'
+```
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="simulation_id" type="string" required>
+  The simulation ID (must be running or in wait-for-command mode)
+</ParamField>
+
+<ParamField body="agent_id" type="integer" required>
+  The agent ID to interview
+</ParamField>
+
+<ParamField body="prompt" type="string" required>
+  The question or prompt to ask the agent
+  
+  The system automatically optimizes the prompt to prevent agents from calling tools.
+</ParamField>
+
+<ParamField body="platform" type="string">
+  Specific platform to interview on (`twitter` or `reddit`)
+  
+  If omitted in a parallel simulation, interviews the agent on both platforms.
+</ParamField>
+
+<ParamField body="timeout" type="integer" default="60">
+  Timeout in seconds to wait for agent response
+</ParamField>
+
+### Response (Single Platform)
+
+<ResponseField name="success" type="boolean">
+  Whether the interview succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="data.agent_id" type="integer">
+    Agent ID interviewed
+  </ResponseField>
+  
+  <ResponseField name="data.prompt" type="string">
+    The question asked
+  </ResponseField>
+  
+  <ResponseField name="data.result" type="object">
+    Interview result
+    
+    <ResponseField name="data.result.agent_id" type="integer">
+      Agent ID
+    </ResponseField>
+    
+    <ResponseField name="data.result.response" type="string">
+      Agent's text response
+    </ResponseField>
+    
+    <ResponseField name="data.result.platform" type="string">
+      Platform used for interview
+    </ResponseField>
+    
+    <ResponseField name="data.result.timestamp" type="string">
+      ISO timestamp
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="data.timestamp" type="string">
+    Interview request timestamp
+  </ResponseField>
+</ResponseField>
+
+### Response (Dual Platform)
+
+<ResponseField name="data.result.platforms" type="object">
+  Platform-specific responses
+  
+  <ResponseField name="data.result.platforms.twitter" type="object">
+    Twitter agent response (same structure as single platform result)
+  </ResponseField>
+  
+  <ResponseField name="data.result.platforms.reddit" type="object">
+    Reddit agent response (same structure as single platform result)
+  </ResponseField>
+</ResponseField>
+
+### Example Response (Single Platform)
+
+```json
+{
+  "success": true,
+  "data": {
+    "agent_id": 0,
+    "prompt": "What do you think about this issue?",
+    "result": {
+      "agent_id": 0,
+      "response": "As a computer science student, I think this raises important questions about AI ethics and responsible development. We need to ensure proper oversight while not stifling innovation.",
+      "platform": "twitter",
+      "timestamp": "2025-12-08T10:00:00"
+    },
+    "timestamp": "2025-12-08T10:00:01"
+  }
+}
+```
+
+### Example Response (Dual Platform)
+
+```json
+{
+  "success": true,
+  "data": {
+    "agent_id": 0,
+    "prompt": "What do you think about this issue?",
+    "result": {
+      "agent_id": 0,
+      "platforms": {
+        "twitter": {
+          "agent_id": 0,
+          "response": "This is a complex issue that requires careful consideration...",
+          "platform": "twitter"
+        },
+        "reddit": {
+          "agent_id": 0,
+          "response": "I've been thinking about this a lot. Based on my experience and the discussions I've seen...",
+          "platform": "reddit"
+        }
+      }
+    },
+    "timestamp": "2025-12-08T10:00:01"
+  }
+}
+```
+
+---
+
+## Batch Interview
+
+Interview multiple agents with different questions in a single request.
+
+<CodeGroup>
+```bash POST /api/simulation/interview/batch
+curl -X POST http://localhost:5000/api/simulation/interview/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "simulation_id": "sim_abc123",
+    "interviews": [
+      {
+        "agent_id": 0,
+        "prompt": "What is your opinion on A?",
+        "platform": "twitter"
+      },
+      {
+        "agent_id": 1,
+        "prompt": "How do you feel about B?"
+      }
+    ],
+    "platform": "reddit",
+    "timeout": 120
+  }'
+```
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+<ParamField body="interviews" type="array" required>
+  Array of interview objects
+  
+  <ParamField body="interviews[].agent_id" type="integer" required>
+    Agent ID to interview
+  </ParamField>
+  
+  <ParamField body="interviews[].prompt" type="string" required>
+    Question for this agent
+  </ParamField>
+  
+  <ParamField body="interviews[].platform" type="string">
+    Platform for this specific interview (overrides default)
+  </ParamField>
+</ParamField>
+
+<ParamField body="platform" type="string">
+  Default platform for all interviews (can be overridden per interview)
+</ParamField>
+
+<ParamField body="timeout" type="integer" default="120">
+  Total timeout in seconds for all interviews
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the batch interview succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="data.interviews_count" type="integer">
+    Number of interviews requested
+  </ResponseField>
+  
+  <ResponseField name="data.result" type="object">
+    <ResponseField name="data.result.interviews_count" type="integer">
+      Total number of interview responses (may be higher if dual-platform)
+    </ResponseField>
+    
+    <ResponseField name="data.result.results" type="object">
+      Map of interview results keyed by `{platform}_{agent_id}`
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="data.timestamp" type="string">
+    ISO timestamp
+  </ResponseField>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "interviews_count": 2,
+    "result": {
+      "interviews_count": 4,
+      "results": {
+        "twitter_0": {
+          "agent_id": 0,
+          "response": "My opinion on A is...",
+          "platform": "twitter"
+        },
+        "reddit_0": {
+          "agent_id": 0,
+          "response": "Regarding A, I think...",
+          "platform": "reddit"
+        },
+        "twitter_1": {
+          "agent_id": 1,
+          "response": "I feel that B is...",
+          "platform": "twitter"
+        },
+        "reddit_1": {
+          "agent_id": 1,
+          "response": "About B, my perspective is...",
+          "platform": "reddit"
+        }
+      }
+    },
+    "timestamp": "2025-12-08T10:00:01"
+  }
+}
+```
+
+---
+
+## Interview All Agents
+
+Ask the same question to all agents in the simulation.
+
+<CodeGroup>
+```bash POST /api/simulation/interview/all
+curl -X POST http://localhost:5000/api/simulation/interview/all \
+  -H "Content-Type: application/json" \
+  -d '{
+    "simulation_id": "sim_abc123",
+    "prompt": "What is your overall opinion on this matter?",
+    "platform": "reddit",
+    "timeout": 180
+  }'
+```
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+<ParamField body="prompt" type="string" required>
+  The question to ask all agents (same question for everyone)
+</ParamField>
+
+<ParamField body="platform" type="string">
+  Platform to use (`twitter`, `reddit`, or omit for both)
+</ParamField>
+
+<ParamField body="timeout" type="integer" default="180">
+  Total timeout in seconds
+</ParamField>
+
+### Response
+
+Same structure as batch interview, with results for all agents.
+
+---
+
+## Get Interview History
+
+Retrieve all past interviews from the simulation database.
+
+<CodeGroup>
+```bash POST /api/simulation/interview/history
+curl -X POST http://localhost:5000/api/simulation/interview/history \
+  -H "Content-Type: application/json" \
+  -d '{
+    "simulation_id": "sim_abc123",
+    "platform": "reddit",
+    "agent_id": 0,
+    "limit": 100
+  }'
+```
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+<ParamField body="platform" type="string">
+  Filter by platform (`twitter` or `reddit`)
+  
+  Omit to get history from both platforms.
+</ParamField>
+
+<ParamField body="agent_id" type="integer">
+  Filter by specific agent ID
+</ParamField>
+
+<ParamField body="limit" type="integer" default="100">
+  Maximum number of interviews to return
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="data.count" type="integer">
+    Number of interviews returned
+  </ResponseField>
+  
+  <ResponseField name="data.history" type="array">
+    Array of interview records
+    
+    <ResponseField name="data.history[].agent_id" type="integer">
+      Agent ID
+    </ResponseField>
+    
+    <ResponseField name="data.history[].response" type="string">
+      Agent's response
+    </ResponseField>
+    
+    <ResponseField name="data.history[].prompt" type="string">
+      Original question
+    </ResponseField>
+    
+    <ResponseField name="data.history[].timestamp" type="string">
+      ISO timestamp
+    </ResponseField>
+    
+    <ResponseField name="data.history[].platform" type="string">
+      Platform used
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+---
+
+## Check Environment Status
+
+Verify that the simulation environment is ready to accept interview commands.
+
+<CodeGroup>
+```bash POST /api/simulation/env-status
+curl -X POST http://localhost:5000/api/simulation/env-status \
+  -H "Content-Type: application/json" \
+  -d '{"simulation_id": "sim_abc123"}'
+```
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="data.simulation_id" type="string">
+    Simulation ID
+  </ResponseField>
+  
+  <ResponseField name="data.env_alive" type="boolean">
+    Whether the environment is alive and accepting commands
+  </ResponseField>
+  
+  <ResponseField name="data.twitter_available" type="boolean">
+    Whether Twitter platform is available for interviews
+  </ResponseField>
+  
+  <ResponseField name="data.reddit_available" type="boolean">
+    Whether Reddit platform is available for interviews
+  </ResponseField>
+  
+  <ResponseField name="data.message" type="string">
+    Status message
+  </ResponseField>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_abc123",
+    "env_alive": true,
+    "twitter_available": true,
+    "reddit_available": true,
+    "message": "环境正在运行，可以接收Interview命令"
+  }
+}
+```
+
+## Error Responses
+
+**400 - Missing Required Fields**
+```json
+{
+  "success": false,
+  "error": "请提供 simulation_id"
+}
+```
+
+**400 - Environment Not Running**
+```json
+{
+  "success": false,
+  "error": "模拟环境未运行或已关闭。请确保模拟已完成并进入等待命令模式。"
+}
+```
+
+**504 - Timeout**
+```json
+{
+  "success": false,
+  "error": "等待Interview响应超时: Request timed out after 60 seconds"
+}
+```
+
+**400 - Invalid Platform**
+```json
+{
+  "success": false,
+  "error": "platform 参数只能是 'twitter' 或 'reddit'"
+}
+```
+
+## Usage Notes
+
+### Environment Requirements
+
+- Interviews only work when the simulation has completed its rounds and entered "wait-for-command" mode
+- Use `/env-status` to verify the environment is ready before interviewing
+- The simulation process must remain running to accept interview commands
+
+### Prompt Optimization
+
+- The system automatically adds a prefix to prevent agents from calling tools
+- Agents respond with natural text rather than taking platform actions
+- Keep prompts clear and specific for best results
+
+### Platform Behavior
+
+- In parallel simulations, agents maintain separate contexts per platform
+- The same agent may give different responses on Twitter vs Reddit
+- Platform-specific history and interactions influence responses
+
+### Performance
+
+- Individual interviews typically complete in 5-15 seconds
+- Batch interviews run sequentially, not in parallel
+- All-agent interviews can take several minutes for large simulations
+- Increase `timeout` for large batch operations
+
+### History
+
+- Interview history is stored in the simulation's SQLite database
+- History persists across API server restarts
+- Filter by agent or platform to analyze specific interview patterns

@@ -1,0 +1,391 @@
+---
+title: "Chat with Report Agent"
+description: "Interactive Q&A with Report Agent for simulation analysis"
+---
+
+## POST /api/report/chat
+
+Engage in interactive conversation with the Report Agent to ask questions about simulation results, request additional analysis, or get clarifications on report content. The Agent autonomously uses retrieval tools to search knowledge graphs and provide contextual answers.
+
+## How It Works
+
+The Report Agent:
+
+1. Receives your question along with conversation history
+2. Analyzes the query and determines which tools to use
+3. Searches the knowledge graph for relevant information
+4. Retrieves simulation events, entities, and relationships
+5. Generates a comprehensive answer with citations
+6. Returns the response along with tool call details and sources
+
+<Info>
+The Agent maintains context from previous messages in the conversation, allowing for follow-up questions and clarifications.
+</Info>
+
+## Request
+
+<ParamField body="simulation_id" type="string" required>
+  The simulation ID to query about (format: `sim_xxxx`)
+</ParamField>
+
+<ParamField body="message" type="string" required>
+  The user's question or message to the Report Agent
+</ParamField>
+
+<ParamField body="chat_history" type="array">
+  Optional conversation history for context. Array of message objects with `role` and `content`.
+  
+  ```json
+  [
+    {"role": "user", "content": "What are the key findings?"},
+    {"role": "assistant", "content": "The main findings are..."}
+  ]
+  ```
+</ParamField>
+
+### Request Example
+
+<CodeGroup>
+```bash cURL
+curl -X POST http://localhost:5000/api/report/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "simulation_id": "sim_a1b2c3d4e5f6",
+    "message": "请解释一下舆情走向",
+    "chat_history": [
+      {
+        "role": "user",
+        "content": "报告的主要发现是什么?"
+      },
+      {
+        "role": "assistant",
+        "content": "主要发现包括三个方面..."
+      }
+    ]
+  }'
+```
+
+```python Python
+import requests
+
+history = []
+
+def chat(message):
+    response = requests.post(
+        "http://localhost:5000/api/report/chat",
+        json={
+            "simulation_id": "sim_a1b2c3d4e5f6",
+            "message": message,
+            "chat_history": history
+        }
+    )
+    
+    result = response.json()["data"]
+    
+    # Update history
+    history.append({"role": "user", "content": message})
+    history.append({"role": "assistant", "content": result["response"]})
+    
+    return result
+
+# Multi-turn conversation
+result1 = chat("What are the main findings?")
+print(result1["response"])
+
+result2 = chat("Can you elaborate on the first finding?")
+print(result2["response"])
+```
+
+```javascript JavaScript
+let chatHistory = [];
+
+async function chat(message) {
+  const response = await fetch('http://localhost:5000/api/report/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      simulation_id: 'sim_a1b2c3d4e5f6',
+      message: message,
+      chat_history: chatHistory
+    })
+  });
+  
+  const { data } = await response.json();
+  
+  // Update history
+  chatHistory.push({ role: 'user', content: message });
+  chatHistory.push({ role: 'assistant', content: data.response });
+  
+  return data;
+}
+
+// Example usage
+const result = await chat('请解释一下舆情走向');
+console.log(result.response);
+console.log('Tools used:', result.tool_calls);
+```
+</CodeGroup>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the chat request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="response" type="string">
+    The Agent's text response to the user's question
+  </ResponseField>
+  
+  <ResponseField name="tool_calls" type="array">
+    List of tools the Agent invoked to answer the question. Each tool call includes:
+    - `tool_name`: Name of the tool (e.g., `search_graph`, `insight_forge`)
+    - `parameters`: Parameters passed to the tool
+    - `result`: Tool execution result
+  </ResponseField>
+  
+  <ResponseField name="sources" type="array">
+    Information sources used to generate the response, including:
+    - Knowledge graph entities
+    - Simulation events
+    - Timeline data
+    - Citations and references
+  </ResponseField>
+</ResponseField>
+
+### Success Response Example
+
+```json
+{
+  "success": true,
+  "data": {
+    "response": "根据模拟数据分析,舆情走向呈现以下特点:\n\n1. **初期爆发阶段** (T0-T2): 事件发生后迅速引发大量关注,相关讨论量激增300%。主要传播节点为微博用户@新闻快报和抖音博主@社会观察员。\n\n2. **扩散期** (T3-T5): 话题向不同社交平台扩散,参与讨论的实体类型从个人用户扩展到媒体机构和意见领袖。情感分析显示负面情绪占比62%。\n\n3. **平稳期** (T6-T8): 讨论热度开始回落,官方回应发布后,正面评价比例上升至45%。\n\n关键影响因素包括突发事件触发、意见领袖转发、以及官方声明的时机。",
+    "tool_calls": [
+      {
+        "tool_name": "search_graph",
+        "parameters": {
+          "graph_id": "mirofish_abc123",
+          "query": "舆情走向 时间线 情感分析",
+          "limit": 20
+        },
+        "result": {
+          "facts_count": 18,
+          "entities_count": 12,
+          "summary": "Found timeline events and sentiment data"
+        }
+      },
+      {
+        "tool_name": "insight_forge",
+        "parameters": {
+          "aspect": "sentiment_timeline",
+          "entities": ["微博", "抖音", "新闻快报"]
+        },
+        "result": {
+          "insights": "3 key patterns identified"
+        }
+      }
+    ],
+    "sources": [
+      {
+        "type": "entity",
+        "name": "@新闻快报",
+        "role": "传播节点",
+        "relevance": 0.92
+      },
+      {
+        "type": "event",
+        "name": "官方声明发布",
+        "timestamp": "T6",
+        "impact": "情感转向"
+      },
+      {
+        "type": "fact",
+        "content": "负面情绪占比62% (T3-T5阶段)",
+        "confidence": 0.88
+      }
+    ]
+  }
+}
+```
+
+## Use Cases
+
+### Ask About Report Findings
+
+```python
+chat("What are the top 3 key findings from the simulation?")
+```
+
+### Request Deeper Analysis
+
+```python
+chat("Can you analyze the relationship between Entity A and Entity B in more detail?")
+```
+
+### Query Specific Events
+
+```python
+chat("What happened at timestamp T5? What were the triggers?")
+```
+
+### Compare Scenarios
+
+```python
+chat("How does the sentiment evolution compare to similar historical events?")
+```
+
+### Get Clarifications
+
+```python
+chat("You mentioned 'critical nodes' earlier. Can you explain what makes them critical?")
+```
+
+## Available Tools
+
+The Report Agent can autonomously invoke:
+
+<CardGroup cols={2}>
+  <Card title="search_graph" icon="magnifying-glass">
+    Semantic search across the knowledge graph to find relevant facts, entities, and relationships
+  </Card>
+  
+  <Card title="insight_forge" icon="lightbulb">
+    Generate analytical insights by synthesizing data from multiple sources
+  </Card>
+  
+  <Card title="timeline_query" icon="clock">
+    Retrieve and analyze temporal event sequences
+  </Card>
+  
+  <Card title="entity_analyzer" icon="diagram-project">
+    Deep analysis of specific entities and their connections
+  </Card>
+</CardGroup>
+
+## Error Responses
+
+### Missing Required Parameters
+
+```json
+{
+  "success": false,
+  "error": "请提供 simulation_id"
+}
+```
+**Status Code**: `400`
+
+```json
+{
+  "success": false,
+  "error": "请提供 message"
+}
+```
+**Status Code**: `400`
+
+### Simulation Not Found
+
+```json
+{
+  "success": false,
+  "error": "模拟不存在: sim_invalid123"
+}
+```
+**Status Code**: `404`
+
+### Missing Knowledge Graph
+
+```json
+{
+  "success": false,
+  "error": "缺少图谱ID"
+}
+```
+**Status Code**: `400`
+
+### Agent Error
+
+```json
+{
+  "success": false,
+  "error": "LLM API timeout",
+  "traceback": "Traceback (most recent call last):\n..."
+}
+```
+**Status Code**: `500`
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Maintain Conversation Context">
+    Always include `chat_history` for multi-turn conversations. This allows the Agent to understand follow-up questions and references to previous answers.
+  </Accordion>
+  
+  <Accordion title="Ask Specific Questions">
+    More specific questions yield better results. Instead of "Tell me about the simulation", ask "What were the sentiment changes during the T3-T5 period?"
+  </Accordion>
+  
+  <Accordion title="Reference Previous Responses">
+    You can ask the Agent to elaborate on specific points from previous answers: "You mentioned X earlier, can you explain that in more detail?"
+  </Accordion>
+  
+  <Accordion title="Check Tool Calls">
+    Review the `tool_calls` field to understand what data the Agent retrieved and how it formulated the answer.
+  </Accordion>
+  
+  <Accordion title="Verify Sources">
+    The `sources` field provides transparency into which entities, events, and facts contributed to the response.
+  </Accordion>
+</AccordionGroup>
+
+## Integration Example
+
+<CodeGroup>
+```python Full Chatbot
+import requests
+from typing import List, Dict
+
+class ReportChatbot:
+    def __init__(self, simulation_id: str, base_url: str = "http://localhost:5000"):
+        self.simulation_id = simulation_id
+        self.base_url = base_url
+        self.history: List[Dict[str, str]] = []
+    
+    def ask(self, message: str) -> Dict:
+        """Send a message to the Report Agent"""
+        response = requests.post(
+            f"{self.base_url}/api/report/chat",
+            json={
+                "simulation_id": self.simulation_id,
+                "message": message,
+                "chat_history": self.history
+            }
+        )
+        
+        if not response.ok:
+            raise Exception(f"API error: {response.json()['error']}")
+        
+        result = response.json()["data"]
+        
+        # Update history
+        self.history.append({"role": "user", "content": message})
+        self.history.append({"role": "assistant", "content": result["response"]})
+        
+        return result
+    
+    def reset(self):
+        """Clear conversation history"""
+        self.history = []
+
+# Usage
+bot = ReportChatbot("sim_a1b2c3d4e5f6")
+
+# First question
+result = bot.ask("What are the main findings?")
+print("Agent:", result["response"])
+print("Sources:", len(result["sources"]), "sources used")
+
+# Follow-up question (context maintained)
+result = bot.ask("Can you elaborate on the first finding?")
+print("Agent:", result["response"])
+```
+</CodeGroup>

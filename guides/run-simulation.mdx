@@ -1,0 +1,376 @@
+---
+title: 'Run Simulation'
+description: 'Execute your MiroFish simulation with dual-platform agent interactions and real-time monitoring'
+---
+
+## Overview
+
+Once your simulation is configured, you can run it to watch AI agents interact across Reddit and Twitter platforms. The simulation:
+
+- Runs agents in parallel across both platforms
+- Executes in discrete rounds (each round = configured time interval)
+- Logs all agent actions and interactions
+- Supports pause, resume, and stop controls
+- Tracks progress in real-time
+
+<Warning>
+  Running simulations consumes significant LLM API credits. For initial testing, use fewer than 40 rounds. Monitor your API usage carefully.
+</Warning>
+
+<Steps>
+  <Step title="Verify simulation is ready">
+    Check that preparation completed successfully:
+
+    ```bash
+    curl http://localhost:5001/api/simulation/sim_xyz789
+    ```
+
+    Look for `"status": "ready"`:
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "simulation_id": "sim_xyz789",
+        "status": "ready",
+        "entities_count": 68,
+        "config_generated": true
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Start the simulation">
+    Use the run endpoint to start execution:
+
+    <CodeGroup>
+      ```bash cURL
+      curl -X POST http://localhost:5001/api/simulation/run \
+        -H "Content-Type: application/json" \
+        -d '{
+          "simulation_id": "sim_xyz789",
+          "total_rounds": 40,
+          "platforms": ["reddit", "twitter"]
+        }'
+      ```
+
+      ```python Python
+      import requests
+
+      response = requests.post(
+          "http://localhost:5001/api/simulation/run",
+          json={
+              "simulation_id": "sim_xyz789",
+              "total_rounds": 40,
+              "platforms": ["reddit", "twitter"]
+          }
+      )
+
+      result = response.json()
+      print(f"Status: {result['data']['runner_status']}")
+      print(f"Total rounds: {result['data']['total_rounds']}")
+      ```
+
+      ```javascript JavaScript
+      const response = await fetch('http://localhost:5001/api/simulation/run', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          simulation_id: 'sim_xyz789',
+          total_rounds: 40,
+          platforms: ['reddit', 'twitter']
+        })
+      });
+
+      const {data} = await response.json();
+      console.log('Simulation started:', data.runner_status);
+      ```
+    </CodeGroup>
+
+    <Note>
+      If `total_rounds` is not specified, the system uses the LLM-recommended rounds from the configuration (based on `total_simulation_hours` / `minutes_per_round`).
+    </Note>
+  </Step>
+
+  <Step title="Monitor real-time progress">
+    Poll the run state endpoint to track simulation progress:
+
+    <CodeGroup>
+      ```bash cURL
+      curl http://localhost:5001/api/simulation/sim_xyz789/run-state
+      ```
+
+      ```python Python
+      import requests
+      import time
+
+      simulation_id = "sim_xyz789"
+      url = f"http://localhost:5001/api/simulation/{simulation_id}/run-state"
+
+      while True:
+          response = requests.get(url)
+          state = response.json()['data']
+          
+          current = state['current_round']
+          total = state['total_rounds']
+          status = state['runner_status']
+          
+          print(f"Round {current}/{total} - Status: {status}")
+          
+          if status in ['completed', 'stopped', 'failed']:
+              break
+          
+          time.sleep(10)  # Check every 10 seconds
+      ```
+
+      ```javascript JavaScript
+      async function monitorSimulation(simulationId) {
+        const url = `http://localhost:5001/api/simulation/${simulationId}/run-state`;
+        
+        while (true) {
+          const response = await fetch(url);
+          const {data: state} = await response.json();
+          
+          console.log(
+            `Round ${state.current_round}/${state.total_rounds} - ${state.runner_status}`
+          );
+          
+          if (['completed', 'stopped', 'failed'].includes(state.runner_status)) {
+            return state;
+          }
+          
+          await new Promise(r => setTimeout(r, 10000));
+        }
+      }
+      ```
+    </CodeGroup>
+
+    Run state response:
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "simulation_id": "sim_xyz789",
+        "runner_status": "running",
+        "current_round": 15,
+        "total_rounds": 40,
+        "start_time": "2025-01-15T12:00:00Z",
+        "last_round_time": "2025-01-15T12:15:00Z",
+        "platforms": ["reddit", "twitter"],
+        "error": null
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="View simulation logs">
+    Access detailed agent action logs:
+
+    ```bash
+    curl http://localhost:5001/api/simulation/sim_xyz789/logs?platform=reddit&limit=50
+    ```
+
+    Logs show all agent actions:
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "logs": [
+          {
+            "round": 15,
+            "timestamp": "2025-01-15T12:15:00Z",
+            "agent_name": "Zhang Wei",
+            "action_type": "post",
+            "platform": "reddit",
+            "content": "I think this policy has both merits and concerns...",
+            "metadata": {
+              "sentiment": "neutral",
+              "engagement_score": 0.75
+            }
+          },
+          {
+            "round": 15,
+            "timestamp": "2025-01-15T12:15:30Z",
+            "agent_name": "Li Ming",
+            "action_type": "reply",
+            "platform": "reddit",
+            "content": "@Zhang Wei I agree with your analysis...",
+            "metadata": {
+              "reply_to": "Zhang Wei",
+              "sentiment": "supportive"
+            }
+          }
+        ],
+        "total_logs": 1250,
+        "page": 1
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+## Control Operations
+
+### Pause Simulation
+
+Temporarily halt execution:
+
+```bash
+curl -X POST http://localhost:5001/api/simulation/sim_xyz789/pause
+```
+
+### Resume Simulation
+
+Continue from paused state:
+
+```bash
+curl -X POST http://localhost:5001/api/simulation/sim_xyz789/resume
+```
+
+### Stop Simulation
+
+Permanently stop (cannot be resumed):
+
+```bash
+curl -X POST http://localhost:5001/api/simulation/sim_xyz789/stop
+```
+
+<Warning>
+  Stopping a simulation is irreversible. Use pause if you plan to resume later.
+</Warning>
+
+## Runner Status States
+
+| Status | Description | Can Resume |
+|--------|-------------|------------|
+| `idle` | Not started | N/A |
+| `running` | Currently executing rounds | Auto |
+| `paused` | Temporarily halted | Yes |
+| `completed` | Finished all rounds successfully | No |
+| `stopped` | Manually stopped by user | No |
+| `failed` | Error occurred during execution | No |
+
+## Platform-Specific Execution
+
+### Reddit Platform
+
+Agents interact via:
+- Creating posts in subreddits
+- Replying to other agents' posts
+- Voting on content
+- Following discussion threads
+
+### Twitter Platform
+
+Agents interact via:
+- Posting tweets
+- Replying to tweets
+- Retweeting content
+- Following trending topics
+
+### Parallel Execution
+
+Both platforms run simultaneously in separate processes for realistic multi-platform dynamics.
+
+## Log Querying
+
+### Filter by Platform
+
+```bash
+curl "http://localhost:5001/api/simulation/sim_xyz789/logs?platform=twitter"
+```
+
+### Filter by Round
+
+```bash
+curl "http://localhost:5001/api/simulation/sim_xyz789/logs?from_round=10&to_round=20"
+```
+
+### Filter by Agent
+
+```bash
+curl "http://localhost:5001/api/simulation/sim_xyz789/logs?agent_name=Zhang%20Wei"
+```
+
+### Pagination
+
+```bash
+curl "http://localhost:5001/api/simulation/sim_xyz789/logs?limit=100&offset=200"
+```
+
+## Performance Considerations
+
+<CardGroup cols={2}>
+  <Card title="Round Duration" icon="clock">
+    Each round takes 10-30 seconds depending on agent count and LLM response time.
+  </Card>
+  
+  <Card title="API Costs" icon="dollar-sign">
+    Each agent action = 1 LLM call. 68 agents × 40 rounds ≈ 2,720+ API calls minimum.
+  </Card>
+  
+  <Card title="Memory Usage" icon="memory">
+    Each agent maintains conversation history. Large simulations need 4GB+ RAM.
+  </Card>
+  
+  <Card title="Disk Space" icon="hard-drive">
+    Logs can grow to 100MB+ for long simulations. Monitor storage usage.
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Simulation fails to start">
+    **Symptoms**: Status remains `idle` or immediately goes to `failed`
+    
+    **Solutions**:
+    - Verify simulation status is `ready` (not `preparing` or `created`)
+    - Check LLM API credentials are valid
+    - Ensure Zep API is accessible
+    - Review backend logs for specific errors
+  </Accordion>
+
+  <Accordion title="Agents not acting">
+    **Symptoms**: Rounds complete but few/no logs generated
+    
+    **Solutions**:
+    - Check agent profiles were generated correctly
+    - Verify initial posts are configured in event_config
+    - Review agent activity levels (may all be `low`)
+    - Check LLM is responding (not rate limited)
+  </Accordion>
+
+  <Accordion title="Slow execution">
+    **Symptoms**: Rounds take >60 seconds each
+    
+    **Solutions**:
+    - Reduce agent count by filtering entity types
+    - Use LLM boost endpoint if configured
+    - Check network latency to LLM API
+    - Consider using faster LLM models
+  </Accordion>
+
+  <Accordion title="Out of memory">
+    **Symptoms**: Backend crashes during simulation
+    
+    **Solutions**:
+    - Reduce total rounds
+    - Limit agent count
+    - Increase server RAM allocation
+    - Clear old simulation logs
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Generate Reports" icon="file-chart-column" href="/guides/generate-reports">
+    Create AI-powered analysis reports from simulation results
+  </Card>
+  <Card title="Interact with Agents" icon="comments" href="/guides/interact-with-agents">
+    Interview individual agents about their experiences
+  </Card>
+</CardGroup>

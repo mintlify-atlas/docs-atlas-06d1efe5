@@ -1,0 +1,93 @@
+---
+title: "Report API Overview"
+description: "Generate and manage simulation analysis reports with AI-powered Report Agent"
+---
+
+## Introduction
+
+The Report API provides endpoints for generating comprehensive analysis reports from simulation results. The API leverages a Report Agent that autonomously retrieves data from knowledge graphs, analyzes simulation outcomes, and generates structured reports in Markdown format.
+
+## Key Features
+
+- **Asynchronous Report Generation**: Generate reports as background tasks with real-time progress tracking
+- **AI-Powered Analysis**: Report Agent uses LLM to analyze simulation data and create insights
+- **Interactive Chat Interface**: Query reports and get answers using the Report Agent
+- **Section-by-Section Streaming**: Access report sections as they're generated without waiting for completion
+- **Multiple Export Formats**: Download reports as Markdown files
+- **Detailed Logging**: Track Agent actions, tool calls, and LLM responses in real-time
+
+## Report Workflow
+
+1. **Generate Report**: Initiate async report generation with `POST /api/report/generate`
+2. **Track Progress**: Poll `POST /api/report/generate/status` to monitor generation progress
+3. **Stream Sections**: Fetch completed sections with `GET /api/report/{report_id}/sections`
+4. **Retrieve Complete Report**: Get full report details with `GET /api/report/{report_id}`
+5. **Interactive Q&A**: Chat with Report Agent using `POST /api/report/chat`
+6. **Export**: Download report as file with `GET /api/report/{report_id}/download`
+
+## Base URL
+
+```
+http://localhost:5000/api/report
+```
+
+## Authentication
+
+Currently, the Report API does not require authentication.
+
+## Core Endpoints
+
+<CardGroup cols={2}>
+  <Card title="Generate Report" icon="play" href="/api/report/generate">
+    Start async report generation task
+  </Card>
+  <Card title="Chat with Agent" icon="comments" href="/api/report/chat">
+    Interactive Q&A with Report Agent
+  </Card>
+  <Card title="Export Report" icon="download" href="/api/report/export">
+    Download report in various formats
+  </Card>
+  <Card title="Get Report" icon="file-lines">
+    Retrieve complete report details
+  </Card>
+</CardGroup>
+
+## Report Structure
+
+Generated reports typically include:
+
+- **Executive Summary**: High-level overview and key findings
+- **Simulation Background**: Context and objectives
+- **Data Analysis**: Detailed insights from knowledge graph
+- **Key Findings**: Critical discoveries and patterns
+- **Recommendations**: Actionable suggestions based on analysis
+- **Appendices**: Supporting data and references
+
+## Report Agent Capabilities
+
+The Report Agent autonomously:
+
+- Searches knowledge graphs using semantic queries
+- Retrieves simulation events and timeline data
+- Analyzes entity relationships and patterns
+- Generates structured content with proper citations
+- Provides interactive Q&A with context awareness
+
+## Error Handling
+
+All endpoints return standardized error responses:
+
+```json
+{
+  "success": false,
+  "error": "Error message description",
+  "traceback": "Detailed stack trace (in development)"
+}
+```
+
+Common HTTP status codes:
+
+- `200` - Success
+- `400` - Bad request (missing parameters)
+- `404` - Resource not found
+- `500` - Internal server error

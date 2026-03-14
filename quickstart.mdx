@@ -1,80 +1,358 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: "Quickstart Guide"
+description: "Get started with MiroFish and run your first simulation in 10 minutes"
 ---
 
-## Get started in three steps
+## Overview
 
-Get your documentation site running locally and make your first customization.
+This quickstart guide will help you:
 
-### Step 1: Set up your local environment
+1. Set up MiroFish locally
+2. Configure API credentials
+3. Run your first multi-agent simulation
+4. Generate a prediction report
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+**Time to complete**: ~10-15 minutes
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+Prerequisites: Node.js 18+, Python 3.11-3.12, and API keys for an LLM provider and Zep Cloud
 </Note>
+
+## Step 1: Clone and Install
+
+<Steps>
+  <Step title="Clone the Repository">
+    ```bash
+    git clone https://github.com/666ghj/MiroFish.git
+    cd MiroFish
+    ```
+  </Step>
+  
+  <Step title="Install Dependencies">
+    Install all dependencies for frontend and backend:
+    
+    ```bash
+    npm run setup:all
+    ```
+    
+    This command will:
+    - Install Node.js dependencies for the frontend
+    - Create a Python virtual environment with `uv`
+    - Install Python dependencies from `pyproject.toml`
+  </Step>
+</Steps>
+
+## Step 2: Configure API Keys
+
+<Steps>
+  <Step title="Copy Environment Template">
+    ```bash
+    cp .env.example .env
+    ```
+  </Step>
+  
+  <Step title="Get LLM API Key">
+    MiroFish supports any OpenAI-compatible LLM API. We recommend **Alibaba Qwen**:
+    
+    1. Visit [Bailian Platform](https://bailian.console.aliyun.com/)
+    2. Create an account and get your API key
+    3. Copy the API key
+    
+    <Accordion title="Alternative LLM Providers">
+      - **OpenAI**: [platform.openai.com](https://platform.openai.com/)
+      - **Azure OpenAI**: Contact your Azure administrator
+      - **Other OpenAI-compatible APIs**
+    </Accordion>
+  </Step>
+  
+  <Step title="Get Zep Cloud API Key">
+    Zep Cloud provides knowledge graph and memory services:
+    
+    1. Visit [app.getzep.com](https://app.getzep.com/)
+    2. Sign up for a free account
+    3. Copy your API key from the dashboard
+    
+    <Note>
+    The free tier is sufficient for testing and small simulations
+    </Note>
+  </Step>
+  
+  <Step title="Update .env File">
+    Edit `.env` with your API keys:
+    
+    ```env
+    # LLM Configuration (Qwen example)
+    LLM_API_KEY=sk-your-qwen-api-key
+    LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+    LLM_MODEL_NAME=qwen-plus
+    
+    # Zep Cloud Configuration
+    ZEP_API_KEY=z_your-zep-api-key
+    ```
+  </Step>
+</Steps>
+
+## Step 3: Start MiroFish
+
+<Steps>
+  <Step title="Launch Services">
+    Start both frontend and backend:
+    
+    ```bash
+    npm run dev
+    ```
+    
+    You should see:
+    ```
+    [backend] MiroFish Backend starting...
+    [frontend] Local: http://localhost:3000
+    ```
+  </Step>
+  
+  <Step title="Open the UI">
+    Open your browser and navigate to:
+    
+    **http://localhost:3000**
+    
+    You should see the MiroFish interface.
+  </Step>
+</Steps>
+
+## Step 4: Run Your First Simulation
+
+Let's simulate public opinion on a hypothetical event.
+
+<Steps>
+  <Step title="Prepare Seed Document">
+    Create a simple text file `scenario.txt`:
+    
+    ```txt
+    # University Announces New Campus Policy
+    
+    Greenville University announced a new policy requiring all students
+    to attend in-person classes at least 3 days per week, starting next
+    semester. The policy aims to improve student engagement and community
+    building.
+    
+    Key stakeholders:
+    - Students: Concerned about commute costs and flexibility
+    - Faculty: Support increased in-person interaction
+    - Administration: Cite declining campus community engagement
+    - Parents: Mixed reactions about safety and costs
+    ```
+  </Step>
+  
+  <Step title="Upload and Generate Ontology">
+    Use the API or UI to upload the document:
+    
+    ```bash
+    curl -X POST http://localhost:5001/api/graph/ontology/generate \
+      -F "files=@scenario.txt" \
+      -F "simulation_requirement=Predict student and parent reactions to the new policy" \
+      -F "project_name=Campus Policy Simulation"
+    ```
+    
+    This returns an ontology defining entities (Student, Faculty, Parent) and relationships (SUPPORTS, OPPOSES).
+  </Step>
+  
+  <Step title="Build Knowledge Graph">
+    Build the Zep knowledge graph:
+    
+    ```bash
+    curl -X POST http://localhost:5001/api/graph/build \
+      -H "Content-Type: application/json" \
+      -d '{
+        "project_id": "proj_xxx",
+        "graph_name": "Campus Policy Graph",
+        "chunk_size": 1000,
+        "chunk_overlap": 200
+      }'
+    ```
+    
+    **Response:**
+    ```json
+    {
+      "task_id": "task_xxx",
+      "status": "processing"
+    }
+    ```
+    
+    **Check status:**
+    ```bash
+    curl http://localhost:5001/api/graph/task/task_xxx
+    ```
+    
+    Wait for `"status": "completed"` (~30 seconds).
+  </Step>
+  
+  <Step title="Generate Agent Profiles">
+    Create agent personas from the graph:
+    
+    ```bash
+    curl -X POST http://localhost:5001/api/simulation/profiles/generate \
+      -H "Content-Type: application/json" \
+      -d '{
+        "graph_id": "graph_xxx",
+        "platforms": ["reddit"],
+        "max_agents_per_type": 10
+      }'
+    ```
+    
+    This generates 20-30 agents representing students, faculty, parents, etc.
+  </Step>
+  
+  <Step title="Start Simulation">
+    Launch the multi-agent simulation:
+    
+    ```bash
+    curl -X POST http://localhost:5001/api/simulation/start \
+      -H "Content-Type: application/json" \
+      -d '{
+        "simulation_id": "sim_xxx",
+        "platforms": ["reddit"],
+        "max_rounds": 24,
+        "update_graph_memory": true
+      }'
+    ```
+    
+    **Monitor progress:**
+    ```bash
+    curl http://localhost:5001/api/simulation/sim_xxx/run-status
+    ```
+    
+    The simulation will run for ~15-20 minutes (24 rounds).
+  </Step>
+  
+  <Step title="Generate Report">
+    Once the simulation completes, generate a prediction report:
+    
+    ```bash
+    curl -X POST http://localhost:5001/api/report/generate \
+      -H "Content-Type: application/json" \
+      -d '{
+        "simulation_id": "sim_xxx"
+      }'
+    ```
+    
+    **Check report status:**
+    ```bash
+    curl http://localhost:5001/api/report/generate/status?simulation_id=sim_xxx
+    ```
+    
+    Report generation takes ~5 minutes.
+  </Step>
+  
+  <Step title="View Results">
+    Retrieve the report:
+    
+    ```bash
+    curl http://localhost:5001/api/report/download/report_xxx
+    ```
+    
+    The report includes:
+    - Executive summary
+    - Sentiment analysis
+    - Key influencers
+    - Opinion evolution over time
+    - Predictions and recommendations
+  </Step>
+</Steps>
+
+## Step 5: Explore Further
+
+<CardGroup cols={2}>
+  <Card title="Chat with Agents" icon="comments" href="/guides/interact-with-agents">
+    Interview individual agents to understand their perspectives
+  </Card>
+  <Card title="Customize Simulations" icon="sliders" href="/advanced/customization">
+    Adjust agent behaviors, ontologies, and simulation parameters
+  </Card>
+  <Card title="API Documentation" icon="code" href="/api/introduction">
+    Explore the complete REST API reference
+  </Card>
+  <Card title="Use Cases" icon="lightbulb" href="/use-cases/public-opinion-analysis">
+    See real-world prediction examples
+  </Card>
+</CardGroup>
+
+## What You've Accomplished
+
+<Check>
+You've successfully:
+- Set up MiroFish locally
+- Configured LLM and Zep Cloud credentials
+- Built a knowledge graph from seed data
+- Run a multi-agent simulation
+- Generated an AI-powered prediction report
+</Check>
+
+## Next Steps
+
+<Steps>
+  <Step title="Try Different Scenarios">
+    Upload documents about financial events, story chapters, or policy proposals
+  </Step>
+  
+  <Step title="Customize Agent Behaviors">
+    Learn how to modify personas and activity patterns
+  </Step>
+  
+  <Step title="Run Longer Simulations">
+    Increase `max_rounds` to 48-96 for more detailed predictions
+  </Step>
+  
+  <Step title="Use Dual Platforms">
+    Run simulations on both Reddit and Twitter simultaneously
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port Already in Use">
+    If ports 3000 or 5001 are occupied:
+    
+    ```bash
+    # macOS/Linux
+    lsof -ti:5001 | xargs kill -9
+    lsof -ti:3000 | xargs kill -9
+    ```
+  </Accordion>
+  
+  <Accordion title="Invalid API Key">
+    Verify your `.env` file:
+    - Check for typos in API keys
+    - Ensure no extra spaces
+    - Restart backend after changes: `npm run backend`
+  </Accordion>
+  
+  <Accordion title="Graph Build Fails">
+    - Check Zep API key validity
+    - Ensure document is readable (PDF, MD, or TXT)
+    - Try smaller `chunk_size` (500)
+  </Accordion>
+  
+  <Accordion title="Simulation Runs Slowly">
+    - Reduce `max_rounds` (try 12-24 for testing)
+    - Use fewer agents (20-30)
+    - Check LLM API rate limits
+  </Accordion>
+</AccordionGroup>
+
+## Get Help
+
+<CardGroup cols={3}>
+  <Card title="Discord" icon="discord" href="https://discord.com/channels/1469200078932545606/1469201282077163739">
+    Join our community
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/666ghj/MiroFish/issues">
+    Report bugs
+  </Card>
+  <Card title="FAQ" icon="question" href="/resources/faq">
+    Common questions
+  </Card>
+</CardGroup>
+
+---
+
+**Ready to predict the future?** Start exploring MiroFish's advanced features in our [guides](/guides/setup-environment)!

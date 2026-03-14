@@ -1,0 +1,380 @@
+---
+title: "Project Management"
+description: "Create, retrieve, list, and delete graph projects"
+---
+
+## Overview
+
+Projects are the core organizational unit for graph building. They persist all state server-side, including uploaded files, extracted text, ontology definitions, and graph references.
+
+## Get Project
+
+Retrieve detailed information about a specific project.
+
+```http
+GET /api/graph/project/{project_id}
+```
+
+### Path Parameters
+
+<ParamField path="project_id" type="string" required>
+  The unique project identifier (format: `proj_xxxxxxxxxxxx`)
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Project details
+  
+  <Expandable title="Project object">
+    <ResponseField name="project_id" type="string">
+      Unique project identifier
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Project name
+    </ResponseField>
+    
+    <ResponseField name="status" type="string">
+      Current project status: `created`, `ontology_generated`, `graph_building`, `graph_completed`, or `failed`
+    </ResponseField>
+    
+    <ResponseField name="created_at" type="string">
+      ISO 8601 timestamp of creation
+    </ResponseField>
+    
+    <ResponseField name="updated_at" type="string">
+      ISO 8601 timestamp of last update
+    </ResponseField>
+    
+    <ResponseField name="files" type="array">
+      List of uploaded files with `filename` and `size`
+    </ResponseField>
+    
+    <ResponseField name="total_text_length" type="integer">
+      Total characters of extracted text
+    </ResponseField>
+    
+    <ResponseField name="ontology" type="object" nullable>
+      Generated ontology with `entity_types` and `edge_types` arrays
+    </ResponseField>
+    
+    <ResponseField name="analysis_summary" type="string" nullable>
+      Summary of ontology analysis
+    </ResponseField>
+    
+    <ResponseField name="graph_id" type="string" nullable>
+      Zep graph identifier (set after successful build)
+    </ResponseField>
+    
+    <ResponseField name="graph_build_task_id" type="string" nullable>
+      Task ID for tracking graph build progress
+    </ResponseField>
+    
+    <ResponseField name="simulation_requirement" type="string" nullable>
+      Original simulation requirement description
+    </ResponseField>
+    
+    <ResponseField name="chunk_size" type="integer">
+      Text chunk size for graph building (default: 500)
+    </ResponseField>
+    
+    <ResponseField name="chunk_overlap" type="integer">
+      Overlap between chunks (default: 50)
+    </ResponseField>
+    
+    <ResponseField name="error" type="string" nullable>
+      Error message if status is `failed`
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+```bash curl
+curl -X GET "http://localhost:5000/api/graph/project/proj_a1b2c3d4e5f6" \
+  -H "Content-Type: application/json"
+```
+
+```python Python
+import requests
+
+project_id = "proj_a1b2c3d4e5f6"
+response = requests.get(f"http://localhost:5000/api/graph/project/{project_id}")
+project = response.json()
+
+print(f"Status: {project['data']['status']}")
+```
+
+```javascript JavaScript
+const projectId = 'proj_a1b2c3d4e5f6';
+const response = await fetch(
+  `http://localhost:5000/api/graph/project/${projectId}`
+);
+const project = await response.json();
+
+console.log('Status:', project.data.status);
+```
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "project_id": "proj_a1b2c3d4e5f6",
+    "name": "Medical Research Analysis",
+    "status": "graph_completed",
+    "created_at": "2024-03-14T10:30:00",
+    "updated_at": "2024-03-14T10:45:00",
+    "files": [
+      {"filename": "research_paper.pdf", "size": 245680}
+    ],
+    "total_text_length": 52341,
+    "ontology": {
+      "entity_types": ["Disease", "Treatment", "Gene"],
+      "edge_types": ["treats", "associated_with"]
+    },
+    "analysis_summary": "Medical domain with focus on disease-treatment relationships",
+    "graph_id": "graph_xyz789",
+    "graph_build_task_id": "task_abc123",
+    "simulation_requirement": "Analyze relationships between diseases and treatments",
+    "chunk_size": 500,
+    "chunk_overlap": 50,
+    "error": null
+  }
+}
+```
+
+---
+
+## List Projects
+
+Retrieve a list of all projects, sorted by creation time (newest first).
+
+```http
+GET /api/graph/project/list
+```
+
+### Query Parameters
+
+<ParamField query="limit" type="integer" default="50">
+  Maximum number of projects to return
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of project objects (same structure as Get Project)
+</ResponseField>
+
+<ResponseField name="count" type="integer">
+  Number of projects returned
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+```bash curl
+curl -X GET "http://localhost:5000/api/graph/project/list?limit=10" \
+  -H "Content-Type: application/json"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "http://localhost:5000/api/graph/project/list",
+    params={"limit": 10}
+)
+projects = response.json()
+
+print(f"Found {projects['count']} projects")
+for project in projects['data']:
+    print(f"- {project['name']}: {project['status']}")
+```
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "project_id": "proj_a1b2c3d4e5f6",
+      "name": "Medical Research",
+      "status": "graph_completed",
+      "created_at": "2024-03-14T10:30:00",
+      "...": "..."
+    },
+    {
+      "project_id": "proj_f6e5d4c3b2a1",
+      "name": "Legal Documents",
+      "status": "ontology_generated",
+      "created_at": "2024-03-13T15:20:00",
+      "...": "..."
+    }
+  ],
+  "count": 2
+}
+```
+
+---
+
+## Delete Project
+
+Permanently delete a project and all associated files.
+
+```http
+DELETE /api/graph/project/{project_id}
+```
+
+<Warning>
+  This operation is irreversible. All uploaded files, extracted text, and project metadata will be permanently deleted from the server. The associated Zep graph (if any) is NOT automatically deleted.
+</Warning>
+
+### Path Parameters
+
+<ParamField path="project_id" type="string" required>
+  The unique project identifier to delete
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the deletion succeeded
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Confirmation message
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+```bash curl
+curl -X DELETE "http://localhost:5000/api/graph/project/proj_a1b2c3d4e5f6" \
+  -H "Content-Type: application/json"
+```
+
+```python Python
+import requests
+
+project_id = "proj_a1b2c3d4e5f6"
+response = requests.delete(
+    f"http://localhost:5000/api/graph/project/{project_id}"
+)
+result = response.json()
+
+if result['success']:
+    print(result['message'])
+```
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "message": "项目已删除: proj_a1b2c3d4e5f6"
+}
+```
+
+### Error Response (404)
+
+```json
+{
+  "success": false,
+  "error": "项目不存在或删除失败: proj_invalid"
+}
+```
+
+---
+
+## Reset Project
+
+Reset a project's status to allow rebuilding the graph with different parameters.
+
+```http
+POST /api/graph/project/{project_id}/reset
+```
+
+### Path Parameters
+
+<ParamField path="project_id" type="string" required>
+  The unique project identifier to reset
+</ParamField>
+
+### Behavior
+
+- If the project has an ontology: status → `ontology_generated`
+- If the project has no ontology: status → `created`
+- Clears: `graph_id`, `graph_build_task_id`, `error`
+- Preserves: uploaded files, ontology, extracted text
+
+<Note>
+  Use this endpoint when you want to rebuild a graph with different `chunk_size`, `chunk_overlap`, or after a failed build. The Zep graph itself is not deleted.
+</Note>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the reset succeeded
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Confirmation message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Updated project object
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+```bash curl
+curl -X POST "http://localhost:5000/api/graph/project/proj_a1b2c3d4e5f6/reset" \
+  -H "Content-Type: application/json"
+```
+
+```python Python
+import requests
+
+project_id = "proj_a1b2c3d4e5f6"
+response = requests.post(
+    f"http://localhost:5000/api/graph/project/{project_id}/reset"
+)
+result = response.json()
+
+print(f"Reset to status: {result['data']['status']}")
+```
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "message": "项目已重置: proj_a1b2c3d4e5f6",
+  "data": {
+    "project_id": "proj_a1b2c3d4e5f6",
+    "status": "ontology_generated",
+    "graph_id": null,
+    "graph_build_task_id": null,
+    "error": null,
+    "...": "..."
+  }
+}
+```

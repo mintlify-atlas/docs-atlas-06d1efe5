@@ -1,0 +1,436 @@
+---
+title: "Build Graph"
+description: "Construct knowledge graphs from projects using AI-powered entity and relationship extraction"
+---
+
+## Overview
+
+The Build Graph endpoint takes a project with a generated ontology and constructs an actual knowledge graph in Zep. This is an asynchronous operation that chunks documents, extracts entities and relationships, and builds a queryable graph structure.
+
+## Build Graph
+
+```http
+POST /api/graph/build
+```
+
+### Prerequisites
+
+<Steps>
+  <Step title="Generate Ontology First">
+    The project must have `status: ontology_generated` or higher. You must call `/api/graph/ontology/generate` before building the graph.
+  </Step>
+  
+  <Step title="Configure Zep API Key">
+    Set the `ZEP_API_KEY` environment variable. The endpoint will return a 500 error if not configured.
+  </Step>
+</Steps>
+
+### Request Body
+
+<ParamField body="project_id" type="string" required>
+  The project ID returned from the ontology generation step
+</ParamField>
+
+<ParamField body="graph_name" type="string">
+  Display name for the graph in Zep. Defaults to the project name.
+</ParamField>
+
+<ParamField body="chunk_size" type="integer" default="500">
+  Maximum characters per text chunk. Smaller chunks provide more granular extraction but increase processing time.
+</ParamField>
+
+<ParamField body="chunk_overlap" type="integer" default="50">
+  Character overlap between consecutive chunks to preserve context across boundaries.
+</ParamField>
+
+<ParamField body="force" type="boolean" default="false">
+  Force rebuild even if the graph is already building or completed. Resets project status and clears previous graph ID.
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Task information
+  
+  <Expandable title="Response data">
+    <ResponseField name="project_id" type="string">
+      The project identifier
+    </ResponseField>
+    
+    <ResponseField name="task_id" type="string">
+      Unique task ID for tracking build progress (format: UUID)
+    </ResponseField>
+    
+    <ResponseField name="message" type="string">
+      Status message, typically instructing how to query progress
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+```bash curl
+curl -X POST "http://localhost:5000/api/graph/build" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "project_id": "proj_a1b2c3d4e5f6",
+    "graph_name": "Medical Knowledge Graph",
+    "chunk_size": 500,
+    "chunk_overlap": 50
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "http://localhost:5000/api/graph/build",
+    json={
+        "project_id": "proj_a1b2c3d4e5f6",
+        "graph_name": "Medical Knowledge Graph",
+        "chunk_size": 500,
+        "chunk_overlap": 50
+    }
+)
+
+result = response.json()
+task_id = result['data']['task_id']
+print(f"Graph build started: {task_id}")
+
+# Poll task status
+import time
+while True:
+    task_response = requests.get(f"http://localhost:5000/api/graph/task/{task_id}")
+    task = task_response.json()['data']
+    
+    print(f"Progress: {task['progress']}% - {task['message']}")
+    
+    if task['status'] in ['completed', 'failed']:
+        break
+    
+    time.sleep(5)
+
+if task['status'] == 'completed':
+    print(f"Graph built successfully!")
+    print(f"Graph ID: {task['result']['graph_id']}")
+    print(f"Nodes: {task['result']['node_count']}, Edges: {task['result']['edge_count']}")
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:5000/api/graph/build', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    project_id: 'proj_a1b2c3d4e5f6',
+    graph_name: 'Medical Knowledge Graph',
+    chunk_size: 500,
+    chunk_overlap: 50
+  })
+});
+
+const result = await response.json();
+const taskId = result.data.task_id;
+console.log('Graph build started:', taskId);
+
+// Poll for completion
+const pollTask = async () => {
+  const taskResponse = await fetch(
+    `http://localhost:5000/api/graph/task/${taskId}`
+  );
+  const task = (await taskResponse.json()).data;
+  
+  console.log(`Progress: ${task.progress}% - ${task.message}`);
+  
+  if (task.status === 'completed') {
+    console.log('Graph built:', task.result);
+  } else if (task.status === 'failed') {
+    console.error('Build failed:', task.error);
+  } else {
+    setTimeout(pollTask, 5000);
+  }
+};
+
+pollTask();
+```
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "project_id": "proj_a1b2c3d4e5f6",
+    "task_id": "550e8400-e29b-41d4-a716-446655440000",
+    "message": "图谱构建任务已启动，请通过 /task/{task_id} 查询进度"
+  }
+}
+```
+
+---
+
+## Query Task Status
+
+Monitor the progress of a graph building task.
+
+```http
+GET /api/graph/task/{task_id}
+```
+
+### Path Parameters
+
+<ParamField path="task_id" type="string" required>
+  The task ID returned from the build endpoint
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Task status object
+  
+  <Expandable title="Task object">
+    <ResponseField name="task_id" type="string">
+      Task identifier
+    </ResponseField>
+    
+    <ResponseField name="task_type" type="string">
+      Description of task (e.g., "构建图谱: Graph Name")
+    </ResponseField>
+    
+    <ResponseField name="status" type="string">
+      Current status: `pending`, `processing`, `completed`, or `failed`
+    </ResponseField>
+    
+    <ResponseField name="created_at" type="string">
+      ISO 8601 timestamp when task was created
+    </ResponseField>
+    
+    <ResponseField name="updated_at" type="string">
+      ISO 8601 timestamp of last update
+    </ResponseField>
+    
+    <ResponseField name="progress" type="integer">
+      Completion percentage (0-100)
+    </ResponseField>
+    
+    <ResponseField name="message" type="string">
+      Human-readable status message
+    </ResponseField>
+    
+    <ResponseField name="result" type="object" nullable>
+      Build results (only present when status is `completed`)
+      
+      <Expandable title="Result object">
+        <ResponseField name="project_id" type="string">
+          Project identifier
+        </ResponseField>
+        
+        <ResponseField name="graph_id" type="string">
+          Zep graph identifier for querying
+        </ResponseField>
+        
+        <ResponseField name="node_count" type="integer">
+          Number of entities extracted
+        </ResponseField>
+        
+        <ResponseField name="edge_count" type="integer">
+          Number of relationships extracted
+        </ResponseField>
+        
+        <ResponseField name="chunk_count" type="integer">
+          Number of text chunks processed
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="error" type="string" nullable>
+      Error message and traceback (only present when status is `failed`)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+```bash curl
+curl -X GET "http://localhost:5000/api/graph/task/550e8400-e29b-41d4-a716-446655440000" \
+  -H "Content-Type: application/json"
+```
+
+```python Python
+import requests
+
+task_id = "550e8400-e29b-41d4-a716-446655440000"
+response = requests.get(f"http://localhost:5000/api/graph/task/{task_id}")
+task = response.json()['data']
+
+print(f"Status: {task['status']}")
+print(f"Progress: {task['progress']}%")
+print(f"Message: {task['message']}")
+```
+</CodeGroup>
+
+### Example Response (In Progress)
+
+```json
+{
+  "success": true,
+  "data": {
+    "task_id": "550e8400-e29b-41d4-a716-446655440000",
+    "task_type": "构建图谱: Medical Knowledge Graph",
+    "status": "processing",
+    "created_at": "2024-03-14T10:35:00",
+    "updated_at": "2024-03-14T10:37:15",
+    "progress": 45,
+    "message": "添加文本块 35/75...",
+    "result": null,
+    "error": null
+  }
+}
+```
+
+### Example Response (Completed)
+
+```json
+{
+  "success": true,
+  "data": {
+    "task_id": "550e8400-e29b-41d4-a716-446655440000",
+    "task_type": "构建图谱: Medical Knowledge Graph",
+    "status": "completed",
+    "created_at": "2024-03-14T10:35:00",
+    "updated_at": "2024-03-14T10:42:30",
+    "progress": 100,
+    "message": "图谱构建完成",
+    "result": {
+      "project_id": "proj_a1b2c3d4e5f6",
+      "graph_id": "graph_xyz789",
+      "node_count": 342,
+      "edge_count": 587,
+      "chunk_count": 75
+    },
+    "error": null
+  }
+}
+```
+
+---
+
+## Build Process Details
+
+The graph building process follows these stages:
+
+<Steps>
+  <Step title="Text Chunking (5%)">
+    Documents are split into overlapping chunks based on `chunk_size` and `chunk_overlap` parameters.
+  </Step>
+  
+  <Step title="Graph Creation (10%)">
+    A new graph is created in Zep with the specified name.
+  </Step>
+  
+  <Step title="Ontology Setup (15%)">
+    The generated ontology (entity types and edge types) is registered with the Zep graph.
+  </Step>
+  
+  <Step title="Batch Processing (15-55%)">
+    Text chunks are sent to Zep in batches of 3 for entity and relationship extraction.
+  </Step>
+  
+  <Step title="Processing Wait (55-90%)">
+    Zep asynchronously processes each chunk using LLMs to extract entities and relationships. Progress is tracked by polling episode status.
+  </Step>
+  
+  <Step title="Data Retrieval (95%)">
+    Final graph statistics (node count, edge count) are retrieved.
+  </Step>
+  
+  <Step title="Completion (100%)">
+    Project status is updated to `graph_completed` and task is marked complete.
+  </Step>
+</Steps>
+
+---
+
+## Error Responses
+
+### Missing Configuration (500)
+
+```json
+{
+  "success": false,
+  "error": "配置错误: ZEP_API_KEY未配置"
+}
+```
+
+### Project Not Found (404)
+
+```json
+{
+  "success": false,
+  "error": "项目不存在: proj_invalid"
+}
+```
+
+### Missing Ontology (400)
+
+```json
+{
+  "success": false,
+  "error": "项目尚未生成本体，请先调用 /ontology/generate"
+}
+```
+
+### Already Building (400)
+
+```json
+{
+  "success": false,
+  "error": "图谱正在构建中，请勿重复提交。如需强制重建，请添加 force: true",
+  "task_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Choosing Chunk Size">
+    - **Smaller chunks (200-300)**: Better for dense documents with many distinct entities
+    - **Medium chunks (500-800)**: Balanced approach for most documents
+    - **Larger chunks (1000+)**: Better for documents with complex, interconnected concepts
+    
+    Trade-off: Smaller chunks increase API calls and processing time but may improve extraction accuracy.
+  </Accordion>
+  
+  <Accordion title="Handling Long Documents">
+    For documents over 50,000 characters:
+    - Expect 5-10 minute build times
+    - Consider increasing `chunk_size` to reduce total chunks
+    - Monitor task progress regularly
+  </Accordion>
+  
+  <Accordion title="Retrying Failed Builds">
+    If a build fails:
+    1. Check the `error` field in the task response
+    2. Use `POST /api/graph/project/{project_id}/reset` to clear the failed state
+    3. Retry with `force: true` or adjusted parameters
+  </Accordion>
+  
+  <Accordion title="Reusing Ontologies">
+    If you want to build multiple graphs with the same ontology:
+    - Keep the original project with `status: ontology_generated`
+    - Use different `graph_name` values
+    - Consider using `force: true` to rebuild with different chunking strategies
+  </Accordion>
+</AccordionGroup>

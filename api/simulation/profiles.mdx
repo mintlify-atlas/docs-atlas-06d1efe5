@@ -1,0 +1,328 @@
+---
+title: Profile Generation
+description: Generate OASIS agent profiles from knowledge graph entities
+---
+
+## Generate Profiles
+
+Generate OASIS agent profiles directly from knowledge graph entities without creating a full simulation.
+
+<CodeGroup>
+```bash POST /api/simulation/profiles/generate
+curl -X POST http://localhost:5000/api/simulation/profiles/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "graph_id": "mirofish_abc123",
+    "entity_types": ["Student", "Professor"],
+    "use_llm": true,
+    "platform": "reddit"
+  }'
+```
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="graph_id" type="string" required>
+  The Zep knowledge graph ID to read entities from
+</ParamField>
+
+<ParamField body="entity_types" type="array">
+  Array of entity types to filter (e.g., `["Student", "Professor"]`)
+  
+  If omitted, all defined entity types are used.
+</ParamField>
+
+<ParamField body="use_llm" type="boolean" default="true">
+  Whether to use LLM to generate rich persona profiles
+  
+  When `true`, generates detailed personality traits, interests, and behavior patterns.
+  When `false`, creates basic profiles from entity properties only.
+</ParamField>
+
+<ParamField body="platform" type="string" default="reddit">
+  Target platform format for profiles
+  
+  Options:
+  - `reddit` - Reddit-specific format (JSON)
+  - `twitter` - Twitter-specific format (CSV)
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Profile generation results
+  
+  <ResponseField name="data.platform" type="string">
+    Platform format used
+  </ResponseField>
+  
+  <ResponseField name="data.entity_types" type="array">
+    List of entity types processed
+  </ResponseField>
+  
+  <ResponseField name="data.count" type="integer">
+    Number of profiles generated
+  </ResponseField>
+  
+  <ResponseField name="data.profiles" type="array">
+    Array of generated profile objects
+    
+    <ResponseField name="data.profiles[].agent_id" type="integer">
+      Sequential agent ID
+    </ResponseField>
+    
+    <ResponseField name="data.profiles[].username" type="string">
+      Generated username for the platform
+    </ResponseField>
+    
+    <ResponseField name="data.profiles[].bio" type="string">
+      Agent biography/description
+    </ResponseField>
+    
+    <ResponseField name="data.profiles[].personality" type="string">
+      Personality traits and characteristics
+    </ResponseField>
+    
+    <ResponseField name="data.profiles[].interests" type="array">
+      List of topics and interests
+    </ResponseField>
+    
+    <ResponseField name="data.profiles[].activity_level" type="string">
+      Activity pattern (e.g., "high", "medium", "low")
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+### Example Response (Reddit)
+
+```json
+{
+  "success": true,
+  "data": {
+    "platform": "reddit",
+    "entity_types": ["Student", "Professor"],
+    "count": 68,
+    "profiles": [
+      {
+        "agent_id": 0,
+        "username": "zhang_wei_cs",
+        "bio": "Computer Science junior at WHU, passionate about AI and open source",
+        "personality": "Curious and analytical, tends to ask detailed questions and engage in technical discussions",
+        "interests": ["Artificial Intelligence", "Machine Learning", "Open Source"],
+        "activity_level": "high",
+        "posting_frequency": 0.3,
+        "commenting_frequency": 0.5,
+        "upvote_frequency": 0.7,
+        "stance_on_topics": {
+          "AI ethics": "concerned",
+          "university policy": "supportive"
+        }
+      },
+      {
+        "agent_id": 1,
+        "username": "prof_li_ming",
+        "bio": "Professor of Computer Science, researching NLP and AI safety",
+        "personality": "Thoughtful and measured, provides educational insights",
+        "interests": ["Natural Language Processing", "AI Safety", "Education"],
+        "activity_level": "medium",
+        "posting_frequency": 0.1,
+        "commenting_frequency": 0.4,
+        "upvote_frequency": 0.3,
+        "stance_on_topics": {
+          "AI ethics": "advocate",
+          "research funding": "supportive"
+        }
+      }
+    ]
+  }
+}
+```
+
+### Example Response (Twitter)
+
+```json
+{
+  "success": true,
+  "data": {
+    "platform": "twitter",
+    "entity_types": ["Student"],
+    "count": 45,
+    "profiles": [
+      {
+        "agent_id": 0,
+        "name": "Zhang Wei",
+        "handle": "zhang_wei_cs",
+        "bio": "CS junior @WHU | AI enthusiast | Open source contributor",
+        "personality": "Enthusiastic and tech-savvy, frequently shares insights",
+        "interests": ["AI", "Programming", "Tech News"],
+        "tweet_frequency": 0.4,
+        "retweet_frequency": 0.3,
+        "reply_frequency": 0.5,
+        "like_frequency": 0.8
+      }
+    ]
+  }
+}
+```
+
+## Get Simulation Profiles
+
+Retrieve agent profiles for an existing simulation.
+
+<CodeGroup>
+```bash GET /api/simulation/{simulation_id}/profiles
+curl "http://localhost:5000/api/simulation/sim_abc123/profiles?platform=reddit"
+```
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="platform" type="string" default="reddit">
+  Platform to retrieve profiles for (`reddit` or `twitter`)
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="data.platform" type="string">
+    Platform name
+  </ResponseField>
+  
+  <ResponseField name="data.count" type="integer">
+    Number of profiles
+  </ResponseField>
+  
+  <ResponseField name="data.profiles" type="array">
+    Array of profile objects (format matches generate endpoint)
+  </ResponseField>
+</ResponseField>
+
+## Get Profiles (Real-Time)
+
+Retrieve profiles in real-time during generation, useful for monitoring preparation progress.
+
+<CodeGroup>
+```bash GET /api/simulation/{simulation_id}/profiles/realtime
+curl "http://localhost:5000/api/simulation/sim_abc123/profiles/realtime?platform=reddit"
+```
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="platform" type="string" default="reddit">
+  Platform to retrieve profiles for
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request succeeded
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="data.simulation_id" type="string">
+    Simulation ID
+  </ResponseField>
+  
+  <ResponseField name="data.platform" type="string">
+    Platform name
+  </ResponseField>
+  
+  <ResponseField name="data.count" type="integer">
+    Current number of profiles generated
+  </ResponseField>
+  
+  <ResponseField name="data.total_expected" type="integer">
+    Expected total number of profiles
+  </ResponseField>
+  
+  <ResponseField name="data.is_generating" type="boolean">
+    Whether profiles are still being generated
+  </ResponseField>
+  
+  <ResponseField name="data.file_exists" type="boolean">
+    Whether the profile file exists
+  </ResponseField>
+  
+  <ResponseField name="data.file_modified_at" type="string">
+    ISO timestamp of last file modification
+  </ResponseField>
+  
+  <ResponseField name="data.profiles" type="array">
+    Array of currently generated profiles
+  </ResponseField>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_abc123",
+    "platform": "reddit",
+    "count": 15,
+    "total_expected": 93,
+    "is_generating": true,
+    "file_exists": true,
+    "file_modified_at": "2025-12-04T18:20:00",
+    "profiles": [
+      /* ... current profiles ... */
+    ]
+  }
+}
+```
+
+## Error Responses
+
+**400 - Missing Required Fields**
+```json
+{
+  "success": false,
+  "error": "请提供 graph_id"
+}
+```
+
+**404 - Simulation Not Found**
+```json
+{
+  "success": false,
+  "error": "模拟不存在: sim_abc123"
+}
+```
+
+**400 - No Entities Found**
+```json
+{
+  "success": false,
+  "error": "没有找到符合条件的实体"
+}
+```
+
+## Usage Notes
+
+- LLM-based profile generation requires valid API keys (OpenAI, Anthropic, etc.)
+- Profile generation can take 1-5 seconds per agent depending on LLM provider
+- Reddit profiles use JSON format, Twitter profiles use CSV format
+- The real-time endpoint is safe to poll frequently during preparation
+- Generated profiles include platform-specific activity patterns and frequencies

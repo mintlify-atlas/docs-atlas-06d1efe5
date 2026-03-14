@@ -1,0 +1,180 @@
+---
+title: Simulation API Overview
+description: Complete guide to the MiroFish Simulation API for running and managing social media simulations
+---
+
+## Introduction
+
+The Simulation API enables you to create, configure, and run multi-agent social media simulations based on knowledge graphs. This API powers MiroFish's core simulation engine that models realistic interactions across Twitter and Reddit platforms.
+
+## Workflow
+
+A typical simulation workflow follows these steps:
+
+### 1. Create Simulation
+
+Create a new simulation instance linked to a project:
+
+```bash
+POST /api/simulation/create
+```
+
+This initializes a simulation with a unique ID and links it to your project's knowledge graph.
+
+### 2. Prepare Simulation
+
+Generate agent profiles and simulation configuration:
+
+```bash
+POST /api/simulation/prepare
+```
+
+This step:
+- Reads entities from the Zep knowledge graph
+- Generates OASIS agent profiles using LLM
+- Creates simulation configuration (time settings, events, topics)
+- Prepares platform-specific data files
+
+### 3. Monitor Preparation
+
+Track the preparation progress:
+
+```bash
+POST /api/simulation/prepare/status
+```
+
+Preparation is asynchronous and may take several minutes depending on the number of entities.
+
+### 4. Start Simulation
+
+Launch the simulation:
+
+```bash
+POST /api/simulation/start
+```
+
+Supports:
+- Platform selection (Twitter, Reddit, or parallel)
+- Round limits
+- Knowledge graph memory updates
+- Force restart options
+
+### 5. Monitor Execution
+
+Track simulation progress in real-time:
+
+```bash
+GET /api/simulation/{simulation_id}/run-status
+```
+
+Monitor:
+- Current round and progress percentage
+- Action counts per platform
+- Simulated time elapsed
+- Agent activity
+
+### 6. Interview Agents
+
+Interact with agents during or after simulation:
+
+```bash
+POST /api/simulation/interview
+```
+
+Ask agents questions and get responses based on their persona and simulation history.
+
+### 7. Stop/Close Simulation
+
+Control simulation execution:
+
+```bash
+POST /api/simulation/stop        # Pause simulation
+POST /api/simulation/close-env   # Gracefully close environment
+```
+
+## Key Features
+
+### Multi-Platform Support
+
+- **Twitter**: Supports posts, retweets, quotes, replies, and likes
+- **Reddit**: Supports posts, comments, and upvotes
+- **Parallel Mode**: Run both platforms simultaneously with synchronized agents
+
+### Intelligent Profile Generation
+
+The API uses LLM to generate realistic agent profiles based on knowledge graph entities:
+
+- Personality traits and behavior patterns
+- Platform-specific configurations
+- Activity schedules and engagement preferences
+- Topic interests and stances
+
+### Real-Time Monitoring
+
+Comprehensive monitoring endpoints provide:
+
+- Round-by-round progress tracking
+- Per-agent action statistics
+- Platform-specific activity feeds
+- Timeline visualization data
+
+### Interview System
+
+Interactive agent interviews allow:
+
+- Single agent interviews
+- Batch interviews
+- All-agent surveys
+- Cross-platform responses
+
+## Common Patterns
+
+### Quick Start Simulation
+
+```bash
+# 1. Create simulation
+curl -X POST http://localhost:5000/api/simulation/create \
+  -H "Content-Type: application/json" \
+  -d '{"project_id": "proj_xxx"}'
+
+# 2. Prepare simulation
+curl -X POST http://localhost:5000/api/simulation/prepare \
+  -H "Content-Type: application/json" \
+  -d '{"simulation_id": "sim_xxx"}'
+
+# 3. Wait for preparation (poll status)
+curl -X POST http://localhost:5000/api/simulation/prepare/status \
+  -H "Content-Type: application/json" \
+  -d '{"simulation_id": "sim_xxx"}'
+
+# 4. Start simulation
+curl -X POST http://localhost:5000/api/simulation/start \
+  -H "Content-Type: application/json" \
+  -d '{"simulation_id": "sim_xxx", "platform": "parallel"}'
+```
+
+### Monitor and Interview
+
+```bash
+# Monitor progress
+curl http://localhost:5000/api/simulation/sim_xxx/run-status
+
+# Interview an agent
+curl -X POST http://localhost:5000/api/simulation/interview \
+  -H "Content-Type: application/json" \
+  -d '{
+    "simulation_id": "sim_xxx",
+    "agent_id": 0,
+    "prompt": "What do you think about this issue?"
+  }'
+```
+
+## Next Steps
+
+Explore specific endpoints:
+
+- [Entity Management](/api/simulation/entities) - Read and filter knowledge graph entities
+- [Profile Generation](/api/simulation/profiles) - Generate OASIS agent profiles
+- [Start Simulation](/api/simulation/start-simulation) - Launch and control simulations
+- [Monitor Progress](/api/simulation/monitor) - Track real-time simulation status
+- [Interview Agents](/api/simulation/interview) - Interactive agent interviews

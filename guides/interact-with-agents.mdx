@@ -1,0 +1,495 @@
+---
+title: 'Interact with Agents'
+description: 'Interview individual agents from your simulation to understand their perspectives and experiences'
+---
+
+## Overview
+
+After completing a simulation and generating a report, you can interact directly with individual agents. This "interview" feature lets you:
+
+- **Query Agent Memory**: Ask agents about their simulation experiences
+- **Explore Perspectives**: Understand different viewpoints and reasoning
+- **Validate Findings**: Cross-check report insights with agent accounts
+- **Discover Details**: Uncover nuances not visible in aggregate analysis
+
+<Note>
+  The interview feature is unlocked only after report generation completes. This ensures agents have full context from the simulation.
+</Note>
+
+<Steps>
+  <Step title="Verify interview is unlocked">
+    Check that report generation is complete:
+
+    ```bash
+    curl http://localhost:5001/api/report/check/sim_xyz789
+    ```
+
+    Look for `"interview_unlocked": true`:
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "simulation_id": "sim_xyz789",
+        "has_report": true,
+        "report_status": "completed",
+        "report_id": "report_abc456",
+        "interview_unlocked": true
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Get list of available agents">
+    Retrieve agent profiles to choose who to interview:
+
+    ```bash
+    curl "http://localhost:5001/api/simulation/sim_xyz789/profiles?platform=reddit"
+    ```
+
+    Response includes all agents with their characteristics:
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "platform": "reddit",
+        "count": 68,
+        "profiles": [
+          {
+            "name": "Zhang Wei",
+            "entity_type": "Student",
+            "profile": {
+              "personality_traits": "Thoughtful, analytical",
+              "interests": ["computer science", "campus policy"],
+              "communication_style": "Formal yet approachable"
+            },
+            "stance_on_issues": {
+              "campus_policy": "supportive with concerns"
+            }
+          },
+          {
+            "name": "Li Ming",
+            "entity_type": "Professor",
+            "profile": {
+              "personality_traits": "Conservative, detail-oriented",
+              "interests": ["academic freedom", "governance"],
+              "communication_style": "Scholarly and measured"
+            }
+          }
+        ]
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Interview an agent">
+    Start a conversation with a specific agent:
+
+    <CodeGroup>
+      ```bash cURL
+      curl -X POST http://localhost:5001/api/simulation/interview \
+        -H "Content-Type: application/json" \
+        -d '{
+          "simulation_id": "sim_xyz789",
+          "agent_name": "Zhang Wei",
+          "message": "How did you feel about the new campus policy announcement?"
+        }'
+      ```
+
+      ```python Python
+      import requests
+
+      response = requests.post(
+          "http://localhost:5001/api/simulation/interview",
+          json={
+              "simulation_id": "sim_xyz789",
+              "agent_name": "Zhang Wei",
+              "message": "How did you feel about the new campus policy announcement?"
+          }
+      )
+
+      result = response.json()
+      print(f"Zhang Wei: {result['data']['response']}")
+      ```
+
+      ```javascript JavaScript
+      const response = await fetch('http://localhost:5001/api/simulation/interview', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          simulation_id: 'sim_xyz789',
+          agent_name: 'Zhang Wei',
+          message: 'How did you feel about the new campus policy announcement?'
+        })
+      });
+
+      const {data} = await response.json();
+      console.log('Zhang Wei:', data.response);
+      ```
+    </CodeGroup>
+
+    Agent responds based on their memory and personality:
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "agent_name": "Zhang Wei",
+        "response": "When I first saw the announcement, I had mixed feelings. As a computer science student, I understand the security concerns, but I'm also worried about how it might affect my late-night access to the lab. I posted about this on Reddit around round 5, and many classmates shared similar concerns. What particularly bothered me was the lack of student consultation before the decision.",
+        "context_used": [
+          "Agent memory: Posted about lab access concerns in round 5",
+          "Agent personality: Analytical, values transparency",
+          "Simulation events: Policy announcement at round 0"
+        ]
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Continue the conversation">
+    Build on previous exchanges by maintaining conversation history:
+
+    <CodeGroup>
+      ```python Python
+      import requests
+
+      # Initialize conversation history
+      chat_history = []
+
+      def interview_agent(agent_name, message):
+          global chat_history
+          
+          response = requests.post(
+              "http://localhost:5001/api/simulation/interview",
+              json={
+                  "simulation_id": "sim_xyz789",
+                  "agent_name": agent_name,
+                  "message": message,
+                  "chat_history": chat_history
+              }
+          )
+          
+          result = response.json()['data']
+          
+          # Update history
+          chat_history.append({
+              "role": "user",
+              "content": message
+          })
+          chat_history.append({
+              "role": "assistant",
+              "content": result['response']
+          })
+          
+          return result['response']
+
+      # Multi-turn conversation
+      print(interview_agent("Zhang Wei", "How did you feel about the policy?"))
+      print(interview_agent("Zhang Wei", "Did your opinion change over time?"))
+      print(interview_agent("Zhang Wei", "What would you recommend to the administration?"))
+      ```
+
+      ```javascript JavaScript
+      class AgentInterviewer {
+        constructor(simulationId) {
+          this.simulationId = simulationId;
+          this.chatHistory = [];
+        }
+
+        async ask(agentName, message) {
+          const response = await fetch('http://localhost:5001/api/simulation/interview', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              simulation_id: this.simulationId,
+              agent_name: agentName,
+              message: message,
+              chat_history: this.chatHistory
+            })
+          });
+
+          const {data} = await response.json();
+
+          // Update history
+          this.chatHistory.push(
+            {role: 'user', content: message},
+            {role: 'assistant', content: data.response}
+          );
+
+          return data.response;
+        }
+      }
+
+      // Usage
+      const interviewer = new AgentInterviewer('sim_xyz789');
+      console.log(await interviewer.ask('Zhang Wei', 'How did you feel about the policy?'));
+      console.log(await interviewer.ask('Zhang Wei', 'Did your opinion change over time?'));
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Interview multiple agents">
+    Compare perspectives by interviewing different agents:
+
+    ```python
+    agents_to_interview = [
+        "Zhang Wei",      # Student perspective
+        "Li Ming",        # Professor perspective  
+        "Wang Admin"      # Administrator perspective
+    ]
+
+    question = "What was your main concern about the new policy?"
+
+    perspectives = {}
+    for agent in agents_to_interview:
+        response = requests.post(
+            "http://localhost:5001/api/simulation/interview",
+            json={
+                "simulation_id": "sim_xyz789",
+                "agent_name": agent,
+                "message": question
+            }
+        )
+        perspectives[agent] = response.json()['data']['response']
+
+    # Compare responses
+    for agent, response in perspectives.items():
+        print(f"\n{agent}:")
+        print(response)
+    ```
+  </Step>
+</Steps>
+
+## Interview Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `simulation_id` | String | Yes | Simulation identifier |
+| `agent_name` | String | Yes | Name of agent to interview (must match profile) |
+| `message` | String | Yes | Your question or prompt |
+| `chat_history` | Array | No | Previous conversation turns for context |
+| `platform` | String | No | Specify platform context (`reddit` or `twitter`) |
+
+## Chat History Format
+
+Maintain conversation context:
+
+```json
+{
+  "chat_history": [
+    {
+      "role": "user",
+      "content": "How did you feel about the policy?"
+    },
+    {
+      "role": "assistant",
+      "content": "I had mixed feelings. On one hand..."
+    },
+    {
+      "role": "user",
+      "content": "Did your opinion change?"
+    }
+  ]
+}
+```
+
+## Agent Response Context
+
+Agents answer based on:
+
+1. **Personality Profile**: Character traits, communication style
+2. **Simulation Memory**: Actions taken, posts made, interactions
+3. **Knowledge Graph**: Domain knowledge and relationships
+4. **Conversation History**: Previous questions in current interview
+
+## Effective Interview Questions
+
+<AccordionGroup>
+  <Accordion title="Experience Questions">
+    Ask about specific simulation events:
+    - "What happened when the policy was announced?"
+    - "Describe your interaction with [other agent] in round 15"
+    - "What was the most surprising thing that occurred?"
+  </Accordion>
+
+  <Accordion title="Opinion Questions">
+    Explore agent perspectives:
+    - "How did you feel about [topic]?"
+    - "What do you think about [other agent's] position?"
+    - "Did your opinion change? Why or why not?"
+  </Accordion>
+
+  <Accordion title="Reasoning Questions">
+    Understand agent motivations:
+    - "Why did you post [specific content]?"
+    - "What influenced your decision to [action]?"
+    - "How did you form your opinion on [topic]?"
+  </Accordion>
+
+  <Accordion title="Predictive Questions">
+    Get agent predictions:
+    - "What do you think will happen next?"
+    - "How would you react if [scenario]?"
+    - "What should the administration do now?"
+  </Accordion>
+
+  <Accordion title="Comparative Questions">
+    Cross-reference experiences:
+    - "How does your view compare to [other agent]?"
+    - "Did Twitter reactions differ from Reddit? How?"
+    - "What did students think vs. professors?"
+  </Accordion>
+</AccordionGroup>
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Report Validation" icon="check-double">
+    Interview agents mentioned in the report to verify findings and add depth to analysis.
+  </Card>
+  
+  <Card title="Minority Perspectives" icon="users">
+    Discover viewpoints that didn't dominate discussions but offer important insights.
+  </Card>
+  
+  <Card title="Timeline Reconstruction" icon="timeline">
+    Ask agents about specific rounds to understand how events unfolded.
+  </Card>
+  
+  <Card title="Counterfactual Exploration" icon="code-branch">
+    Query agents about hypothetical scenarios: "What if the policy was different?"
+  </Card>
+</CardGroup>
+
+## Tips for Better Interviews
+
+### Be Specific
+
+<CodeGroup>
+  ```text ❌ Vague
+  "What do you think?"
+  ```
+
+  ```text ✅ Specific
+  "What did you think when the university announced the campus access policy in the initial post?"
+  ```
+</CodeGroup>
+
+### Reference Simulation Events
+
+<CodeGroup>
+  ```text ❌ Generic
+  "Did you post anything?"
+  ```
+
+  ```text ✅ Event-Based
+  "I noticed you posted about lab access concerns in round 5. What prompted that post?"
+  ```
+</CodeGroup>
+
+### Follow Up on Answers
+
+<CodeGroup>
+  ```text ❌ One-Shot
+  "How did you feel?" → New topic
+  ```
+
+  ```text ✅ Probing
+  "How did you feel?" → "Why did you feel that way?" → "Did others share your concern?"
+  ```
+</CodeGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Interview locked">
+    **Error**: `"interview_unlocked": false`
+    
+    **Solution**: Complete report generation first. Interview requires report context.
+  </Accordion>
+
+  <Accordion title="Agent not found">
+    **Error**: `"Agent not found: [name]"`
+    
+    **Solution**: 
+    - Check exact spelling (case-sensitive)
+    - Verify agent exists in profiles endpoint
+    - Ensure simulation_id is correct
+  </Accordion>
+
+  <Accordion title="Generic responses">
+    **Issue**: Agent gives vague, unhelpful answers
+    
+    **Solution**:
+    - Ask more specific questions
+    - Reference concrete simulation events
+    - Provide more context in your question
+  </Accordion>
+
+  <Accordion title="Inconsistent answers">
+    **Issue**: Agent contradicts previous statements
+    
+    **Solution**:
+    - Ensure you're passing `chat_history` correctly
+    - Check that history includes both user and assistant messages
+    - Verify array order (chronological)
+  </Accordion>
+</AccordionGroup>
+
+## Sample Interview Session
+
+```python
+import requests
+
+class Interview:
+    def __init__(self, sim_id, agent_name):
+        self.sim_id = sim_id
+        self.agent_name = agent_name
+        self.history = []
+    
+    def ask(self, question):
+        response = requests.post(
+            "http://localhost:5001/api/simulation/interview",
+            json={
+                "simulation_id": self.sim_id,
+                "agent_name": self.agent_name,
+                "message": question,
+                "chat_history": self.history
+            }
+        )
+        
+        answer = response.json()['data']['response']
+        
+        self.history.extend([
+            {"role": "user", "content": question},
+            {"role": "assistant", "content": answer}
+        ])
+        
+        return answer
+
+# Conduct interview
+interview = Interview("sim_xyz789", "Zhang Wei")
+
+print("Q: How did you feel when the policy was announced?")
+print(f"A: {interview.ask('How did you feel when the policy was announced?')}")
+print()
+
+print("Q: Did you discuss this with other students?")
+print(f"A: {interview.ask('Did you discuss this with other students?')}")
+print()
+
+print("Q: What would you recommend to the administration?")
+print(f"A: {interview.ask('What would you recommend to the administration?')}")
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="book" href="/api/simulation/interview">
+    Detailed API documentation for interview endpoint
+  </Card>
+  <Card title="New Simulation" icon="rotate" href="/guides/upload-seed-data">
+    Start a new simulation with different scenarios
+  </Card>
+</CardGroup>

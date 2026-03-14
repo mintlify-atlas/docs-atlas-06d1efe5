@@ -1,0 +1,233 @@
+---
+title: 'Deploy with Docker'
+description: 'Deploy MiroFish using Docker Compose for simplified setup'
+---
+
+## Overview
+
+Docker deployment provides a containerized environment for MiroFish, simplifying the installation process by bundling all dependencies and runtime requirements into a single image.
+
+<Note>
+  Docker deployment is recommended for production environments and users who want a quick, hassle-free setup.
+</Note>
+
+## Prerequisites
+
+Ensure you have the following installed:
+
+- **Docker**: Version 20.10 or higher
+- **Docker Compose**: Version 2.0 or higher
+
+Verify your installation:
+
+```bash
+docker --version
+docker compose version
+```
+
+## Quick Start
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/666ghj/MiroFish.git
+    cd MiroFish
+    ```
+  </Step>
+
+  <Step title="Configure environment variables">
+    Copy the example environment file and configure your API keys:
+    
+    ```bash
+    cp .env.example .env
+    ```
+    
+    Edit the `.env` file with your API credentials. See [Environment Variables](/deployment/environment-variables) for configuration details.
+    
+    <Warning>
+      The Docker container reads the `.env` file from the project root directory. Ensure all required variables are set before starting.
+    </Warning>
+  </Step>
+
+  <Step title="Start the container">
+    Pull the image and start the services:
+    
+    ```bash
+    docker compose up -d
+    ```
+    
+    The `-d` flag runs the container in detached mode (background).
+  </Step>
+
+  <Step title="Verify the deployment">
+    Check that the container is running:
+    
+    ```bash
+    docker compose ps
+    ```
+    
+    Access the application:
+    - **Frontend**: http://localhost:3000
+    - **Backend API**: http://localhost:5001
+  </Step>
+</Steps>
+
+## Docker Compose Configuration
+
+The `docker-compose.yml` file defines the MiroFish service:
+
+```yaml
+services:
+  mirofish:
+    image: ghcr.io/666ghj/mirofish:latest
+    container_name: mirofish
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+      - "5001:5001"
+    restart: unless-stopped
+    volumes:
+      - ./backend/uploads:/app/backend/uploads
+```
+
+### Key Configuration Details
+
+| Property | Value | Description |
+|----------|-------|-------------|
+| **Image** | `ghcr.io/666ghj/mirofish:latest` | Official MiroFish Docker image from GitHub Container Registry |
+| **Container Name** | `mirofish` | Custom name for easier management |
+| **Environment** | `.env` file | Environment variables loaded from project root |
+| **Ports** | `3000:3000`, `5001:5001` | Frontend and backend port mappings |
+| **Restart Policy** | `unless-stopped` | Auto-restart on failure (except manual stops) |
+| **Volumes** | `./backend/uploads` | Persistent storage for uploaded files |
+
+## Port Mappings
+
+MiroFish exposes two ports:
+
+- **Port 3000**: Frontend (Next.js application)
+- **Port 5001**: Backend API (Python/Flask server)
+
+Both ports are mapped from the container to the host machine with the same port numbers.
+
+<Note>
+  If you need to change the port mappings, modify the `ports` section in `docker-compose.yml`. For example, to use port 8080 for the frontend:
+  
+  ```yaml
+  ports:
+    - "8080:3000"  # Host:Container
+    - "5001:5001"
+  ```
+</Note>
+
+## Using Alternative Registry (China Mirror)
+
+If you experience slow download speeds from GitHub Container Registry, use the China mirror:
+
+```yaml
+services:
+  mirofish:
+    image: ghcr.nju.edu.cn/666ghj/mirofish:latest  # NJU mirror
+    # ... rest of configuration
+```
+
+<Note>
+  The mirror is provided by Nanjing University and is particularly useful for users in China.
+</Note>
+
+## Managing the Container
+
+### View Logs
+
+```bash
+# View real-time logs
+docker compose logs -f
+
+# View last 100 lines
+docker compose logs --tail=100
+```
+
+### Stop the Container
+
+```bash
+docker compose down
+```
+
+### Restart the Container
+
+```bash
+docker compose restart
+```
+
+### Rebuild and Restart
+
+If you've made changes to the `.env` file:
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+### Update to Latest Version
+
+```bash
+# Pull the latest image
+docker compose pull
+
+# Restart with new image
+docker compose up -d
+```
+
+## Dockerfile Reference
+
+The MiroFish Dockerfile builds a multi-layer image:
+
+```dockerfile
+FROM python:3.11
+
+# Install Node.js (>=18) and necessary tools
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends nodejs npm \
+  && rm -rf /var/lib/apt/lists/*
+
+# Copy uv from official image
+COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
+
+WORKDIR /app
+
+# Copy dependency files (for layer caching)
+COPY package.json package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json ./frontend/
+COPY backend/pyproject.toml backend/uv.lock ./backend/
+
+# Install dependencies (Node + Python)
+RUN npm ci \
+  && npm ci --prefix frontend \
+  && cd backend && uv sync --frozen
+
+# Copy project source code
+COPY . .
+
+EXPOSE 3000 5001
+
+# Start both frontend and backend
+CMD ["npm", "run", "dev"]
+```
+
+## Persistent Data
+
+The Docker setup mounts the `./backend/uploads` directory to persist uploaded files:
+
+```yaml
+volumes:
+  - ./backend/uploads:/app/backend/uploads
+```
+
+This ensures that any files uploaded to MiroFish (such as seed documents for simulation) are preserved even if the container is recreated.
+
+## Next Steps
+
+- Configure [Environment Variables](/deployment/environment-variables) for your deployment
+- Review [Troubleshooting](/deployment/troubleshooting) for common Docker issues
+- Learn about [Source Code Deployment](/deployment/source-code) for development environments

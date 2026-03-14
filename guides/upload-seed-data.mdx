@@ -1,0 +1,241 @@
+---
+title: 'Upload Seed Data'
+description: 'Upload documents and generate ontology definitions for your MiroFish simulation'
+---
+
+## Overview
+
+The first step in creating a MiroFish simulation is uploading seed data (documents) and generating an ontology. The system analyzes your documents and automatically defines:
+
+- **Entity Types**: Key actors in your simulation (e.g., Student, Professor, Public Figure)
+- **Relationship Types**: How entities interact (e.g., ATTENDS, TEACHES, INFLUENCES)
+- **Analysis Summary**: Context and insights from your documents
+
+<Steps>
+  <Step title="Prepare your documents">
+    MiroFish supports multiple document formats:
+
+    - **PDF**: Research papers, reports, articles
+    - **Markdown (.md)**: Documentation, notes
+    - **Text (.txt)**: Plain text data
+
+    <Note>
+      For best results, use documents that contain rich context about entities and their relationships. Examples include news reports, analytical reports, or narrative content.
+    </Note>
+  </Step>
+
+  <Step title="Define simulation requirements">
+    Before uploading, prepare a clear description of what you want to predict or simulate. This helps the system generate appropriate ontology.
+
+    Examples:
+    - "Predict public sentiment if University X announces policy Y"
+    - "Simulate how the story unfolds after Chapter 80 of Dream of Red Mansions"
+    - "Analyze market reaction to a new financial regulation"
+  </Step>
+
+  <Step title="Upload via API">
+    Use the `/api/graph/ontology/generate` endpoint to upload documents and generate ontology.
+
+    <CodeGroup>
+      ```bash cURL
+      curl -X POST http://localhost:5001/api/graph/ontology/generate \
+        -F "files=@/path/to/document1.pdf" \
+        -F "files=@/path/to/document2.md" \
+        -F "simulation_requirement=Predict public opinion if Wuhan University announces new campus policy" \
+        -F "project_name=Wuhan University Sentiment Analysis" \
+        -F "additional_context=Focus on student and faculty reactions"
+      ```
+
+      ```python Python
+      import requests
+
+      url = "http://localhost:5001/api/graph/ontology/generate"
+      
+      files = [
+          ('files', open('document1.pdf', 'rb')),
+          ('files', open('document2.md', 'rb'))
+      ]
+      
+      data = {
+          'simulation_requirement': 'Predict public opinion if Wuhan University announces new campus policy',
+          'project_name': 'Wuhan University Sentiment Analysis',
+          'additional_context': 'Focus on student and faculty reactions'
+      }
+      
+      response = requests.post(url, files=files, data=data)
+      result = response.json()
+      
+      print(f"Project ID: {result['data']['project_id']}")
+      print(f"Entities: {len(result['data']['ontology']['entity_types'])}")
+      ```
+
+      ```javascript JavaScript
+      const formData = new FormData();
+      formData.append('files', fileInput.files[0]);
+      formData.append('files', fileInput.files[1]);
+      formData.append('simulation_requirement', 
+        'Predict public opinion if Wuhan University announces new campus policy');
+      formData.append('project_name', 'Wuhan University Sentiment Analysis');
+      formData.append('additional_context', 'Focus on student and faculty reactions');
+
+      const response = await fetch('http://localhost:5001/api/graph/ontology/generate', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      console.log('Project ID:', result.data.project_id);
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Review generated ontology">
+    The API returns a complete ontology definition:
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "project_id": "proj_a1b2c3d4",
+        "project_name": "Wuhan University Sentiment Analysis",
+        "ontology": {
+          "entity_types": [
+            {
+              "name": "Student",
+              "description": "University students affected by policy"
+            },
+            {
+              "name": "Professor",
+              "description": "Faculty members and academic staff"
+            },
+            {
+              "name": "Administrator",
+              "description": "University administration officials"
+            }
+          ],
+          "edge_types": [
+            {
+              "name": "INFLUENCES",
+              "description": "One entity influences another's opinion"
+            },
+            {
+              "name": "SUPPORTS",
+              "description": "Entity supports a policy or position"
+            },
+            {
+              "name": "OPPOSES",
+              "description": "Entity opposes a policy or position"
+            }
+          ]
+        },
+        "analysis_summary": "The documents describe a university community with various stakeholders...",
+        "files": [
+          {"filename": "document1.pdf", "size": 245760},
+          {"filename": "document2.md", "size": 12800}
+        ],
+        "total_text_length": 125000
+      }
+    }
+    ```
+
+    <Note>
+      Save the `project_id` - you'll need it for the next steps!
+    </Note>
+  </Step>
+</Steps>
+
+## Request Parameters
+
+### Multipart Form Data
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `files` | File[] | Yes | One or more document files (PDF/MD/TXT) |
+| `simulation_requirement` | String | Yes | Description of what you want to predict or simulate |
+| `project_name` | String | No | Human-readable project name (default: "Unnamed Project") |
+| `additional_context` | String | No | Extra context to guide ontology generation |
+
+## Response Format
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "project_id": "proj_xxxx",
+    "project_name": "string",
+    "ontology": {
+      "entity_types": [...],
+      "edge_types": [...]
+    },
+    "analysis_summary": "string",
+    "files": [...],
+    "total_text_length": 0
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "success": false,
+  "error": "Error message",
+  "traceback": "Detailed error trace (in development mode)"
+}
+```
+
+## Common Errors
+
+<AccordionGroup>
+  <Accordion title="No files uploaded">
+    **Error**: `"请至少上传一个文档文件"`
+    
+    **Solution**: Ensure at least one valid document file is included in the request.
+  </Accordion>
+
+  <Accordion title="Missing simulation requirement">
+    **Error**: `"请提供模拟需求描述 (simulation_requirement)"`
+    
+    **Solution**: Include the `simulation_requirement` parameter with a clear description.
+  </Accordion>
+
+  <Accordion title="Invalid file format">
+    **Error**: `"没有成功处理任何文档，请检查文件格式"`
+    
+    **Solution**: Only upload PDF, MD, or TXT files. Check file extensions and integrity.
+  </Accordion>
+
+  <Accordion title="LLM API not configured">
+    **Error**: Configuration errors related to `LLM_API_KEY`
+    
+    **Solution**: Verify your `.env` file has valid `LLM_API_KEY`, `LLM_BASE_URL`, and `LLM_MODEL_NAME` settings.
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Document Quality" icon="file-check">
+    Use documents with rich, structured information about entities and relationships. News reports and analytical content work best.
+  </Card>
+  
+  <Card title="Clear Requirements" icon="bullseye">
+    Write specific simulation requirements. Instead of "predict reactions", use "predict student social media reactions within 48 hours".
+  </Card>
+  
+  <Card title="Multiple Sources" icon="files">
+    Upload multiple documents for better context. The system will extract and combine information from all sources.
+  </Card>
+  
+  <Card title="Save Project ID" icon="bookmark">
+    Always save the returned `project_id` - you'll need it for graph building and simulation setup.
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<Card title="Build Knowledge Graph" icon="diagram-project" href="/guides/build-knowledge-graph">
+  Use your project_id to construct the knowledge graph from the uploaded documents
+</Card>

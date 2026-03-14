@@ -1,0 +1,311 @@
+---
+title: Start Simulation
+description: Launch and control simulation execution
+---
+
+## Start Simulation
+
+Begin running a prepared simulation on one or both platforms.
+
+<CodeGroup>
+```bash POST /api/simulation/start
+curl -X POST http://localhost:5000/api/simulation/start \
+  -H "Content-Type: application/json" \
+  -d '{
+    "simulation_id": "sim_abc123",
+    "platform": "parallel",
+    "max_rounds": 100,
+    "enable_graph_memory_update": false
+  }'
+```
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="simulation_id" type="string" required>
+  The simulation ID (must be in "ready" status)
+</ParamField>
+
+<ParamField body="platform" type="string" default="parallel">
+  Platform to run simulation on
+  
+  Options:
+  - `parallel` - Run Twitter and Reddit simultaneously (recommended)
+  - `twitter` - Twitter only
+  - `reddit` - Reddit only
+</ParamField>
+
+<ParamField body="max_rounds" type="integer">
+  Maximum number of simulation rounds to run
+  
+  If not specified, uses the recommended rounds from simulation config.
+  Use this to limit long simulations or test with shorter runs.
+</ParamField>
+
+<ParamField body="enable_graph_memory_update" type="boolean" default="false">
+  Whether to update the Zep knowledge graph with agent activities in real-time
+  
+  When enabled:
+  - All agent actions (posts, comments, likes) are written to the knowledge graph
+  - Graph "remembers" simulation events for future AI conversations
+  - Requires valid `graph_id` in the simulation
+  - Uses batched updates to minimize API calls
+</ParamField>
+
+<ParamField body="force" type="boolean" default="false">
+  Force restart the simulation
+  
+  When enabled:
+  - Stops any running simulation instance
+  - Cleans up run logs (`run_state.json`, `actions.jsonl`, `simulation.log`)
+  - Preserves configuration files and profiles
+  - Useful for re-running simulations from scratch
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the simulation started successfully
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Simulation run state
+  
+  <ResponseField name="data.simulation_id" type="string">
+    Simulation ID
+  </ResponseField>
+  
+  <ResponseField name="data.runner_status" type="string">
+    Current runner status: `running`, `stopped`, `completed`, `failed`
+  </ResponseField>
+  
+  <ResponseField name="data.process_pid" type="integer">
+    Process ID of the simulation runner
+  </ResponseField>
+  
+  <ResponseField name="data.twitter_running" type="boolean">
+    Whether Twitter simulation is active
+  </ResponseField>
+  
+  <ResponseField name="data.reddit_running" type="boolean">
+    Whether Reddit simulation is active
+  </ResponseField>
+  
+  <ResponseField name="data.started_at" type="string">
+    ISO timestamp when simulation started
+  </ResponseField>
+  
+  <ResponseField name="data.current_round" type="integer">
+    Current simulation round (starts at 0)
+  </ResponseField>
+  
+  <ResponseField name="data.total_rounds" type="integer">
+    Total rounds planned
+  </ResponseField>
+  
+  <ResponseField name="data.max_rounds_applied" type="integer">
+    Maximum rounds limit applied (if specified)
+  </ResponseField>
+  
+  <ResponseField name="data.graph_memory_update_enabled" type="boolean">
+    Whether graph memory updates are enabled
+  </ResponseField>
+  
+  <ResponseField name="data.graph_id" type="string">
+    Knowledge graph ID (if memory updates enabled)
+  </ResponseField>
+  
+  <ResponseField name="data.force_restarted" type="boolean">
+    Whether this was a forced restart
+  </ResponseField>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_abc123",
+    "runner_status": "running",
+    "process_pid": 12345,
+    "twitter_running": true,
+    "reddit_running": true,
+    "started_at": "2025-12-01T10:00:00",
+    "current_round": 0,
+    "total_rounds": 144,
+    "max_rounds_applied": 100,
+    "graph_memory_update_enabled": true,
+    "graph_id": "mirofish_abc123",
+    "force_restarted": false
+  }
+}
+```
+
+---
+
+## Stop Simulation
+
+Pause a running simulation.
+
+<CodeGroup>
+```bash POST /api/simulation/stop
+curl -X POST http://localhost:5000/api/simulation/stop \
+  -H "Content-Type: application/json" \
+  -d '{"simulation_id": "sim_abc123"}'
+```
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="simulation_id" type="string" required>
+  The simulation ID to stop
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the simulation stopped successfully
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="data.simulation_id" type="string">
+    Simulation ID
+  </ResponseField>
+  
+  <ResponseField name="data.runner_status" type="string">
+    Updated status: `stopped`
+  </ResponseField>
+  
+  <ResponseField name="data.completed_at" type="string">
+    ISO timestamp when simulation stopped
+  </ResponseField>
+</ResponseField>
+
+---
+
+## Close Simulation Environment
+
+Gracefully close the simulation environment and exit.
+
+<CodeGroup>
+```bash POST /api/simulation/close-env
+curl -X POST http://localhost:5000/api/simulation/close-env \
+  -H "Content-Type: application/json" \
+  -d '{"simulation_id": "sim_abc123", "timeout": 30}'
+```
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="simulation_id" type="string" required>
+  The simulation ID
+</ParamField>
+
+<ParamField body="timeout" type="integer" default="30">
+  Timeout in seconds to wait for graceful shutdown
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the environment closed successfully
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="data.message" type="string">
+    Status message
+  </ResponseField>
+  
+  <ResponseField name="data.result" type="object">
+    Shutdown result details
+  </ResponseField>
+  
+  <ResponseField name="data.timestamp" type="string">
+    ISO timestamp
+  </ResponseField>
+</ResponseField>
+
+## Error Responses
+
+**400 - Invalid Request**
+```json
+{
+  "success": false,
+  "error": "请提供 simulation_id"
+}
+```
+
+**404 - Simulation Not Found**
+```json
+{
+  "success": false,
+  "error": "模拟不存在: sim_abc123"
+}
+```
+
+**400 - Not Ready**
+```json
+{
+  "success": false,
+  "error": "模拟未准备好，当前状态: preparing，请先调用 /prepare 接口"
+}
+```
+
+**400 - Already Running**
+```json
+{
+  "success": false,
+  "error": "模拟正在运行中，请先调用 /stop 接口停止，或使用 force=true 强制重新开始"
+}
+```
+
+**400 - Invalid Platform**
+```json
+{
+  "success": false,
+  "error": "无效的平台类型: unknown，可选: twitter/reddit/parallel"
+}
+```
+
+**400 - Graph Memory Update Failed**
+```json
+{
+  "success": false,
+  "error": "启用图谱记忆更新需要有效的 graph_id，请确保项目已构建图谱"
+}
+```
+
+## Usage Notes
+
+### Platform Selection
+
+- **Parallel mode** is recommended for most use cases - it runs both platforms with synchronized agents
+- **Single platform** modes are useful for testing or platform-specific analysis
+- Agents maintain consistent personas across platforms in parallel mode
+
+### Round Limits
+
+- The simulation config contains a recommended `total_rounds` based on simulation duration
+- Use `max_rounds` to override this for testing or resource constraints
+- Each round typically represents 5-60 minutes of simulated time (configurable)
+
+### Graph Memory Updates
+
+- Enabling this feature creates a "living memory" of the simulation
+- Useful for post-simulation AI analysis and conversations
+- Adds overhead to simulation runtime
+- Updates are batched to minimize API calls to Zep
+
+### Force Restart
+
+- Use `force=true` to re-run a simulation from scratch
+- Preserves profiles and configuration
+- Clears all runtime data (actions, logs, state)
+- Cannot be undone - use carefully
+
+### Process Management
+
+- The simulation runs in a background process
+- Use the `process_pid` to monitor or debug the process directly if needed
+- The runner survives API server restarts (process is independent)

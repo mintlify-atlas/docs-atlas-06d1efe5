@@ -1,0 +1,126 @@
+---
+title: 'Deploy from Source Code'
+description: 'Step-by-step guide to deploy MiroFish from source code'
+---
+
+## Prerequisites
+
+Before deploying MiroFish from source, ensure you have the following tools installed:
+
+| Tool | Version Requirement | Description | Verification Command |
+|------|-------------------|-------------|---------------------|
+| **Node.js** | 18+ | Frontend runtime environment with npm | `node -v` |
+| **Python** | ≥3.11, ≤3.12 | Backend runtime environment | `python --version` |
+| **uv** | Latest | Python package manager | `uv --version` |
+
+<Note>
+  MiroFish requires Python 3.11 or 3.12. Python 3.13+ is not currently supported.
+</Note>
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone the MiroFish repository to your local machine:
+    
+    ```bash
+    git clone https://github.com/666ghj/MiroFish.git
+    cd MiroFish
+    ```
+  </Step>
+
+  <Step title="Configure environment variables">
+    Copy the example environment file and configure your API keys:
+    
+    ```bash
+    cp .env.example .env
+    ```
+    
+    Edit the `.env` file and add your required API keys. See the [Environment Variables](/deployment/environment-variables) page for details.
+    
+    <Warning>
+      You must configure at least `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL_NAME`, and `ZEP_API_KEY` for MiroFish to function properly.
+    </Warning>
+  </Step>
+
+  <Step title="Install dependencies">
+    Install all project dependencies using the setup scripts:
+    
+    <CodeGroup>
+    ```bash One-command installation
+    # Install all dependencies (root + frontend + backend)
+    npm run setup:all
+    ```
+    
+    ```bash Step-by-step installation
+    # Install Node dependencies (root + frontend)
+    npm run setup
+    
+    # Install Python dependencies (backend, auto-creates virtual environment)
+    npm run setup:backend
+    ```
+    </CodeGroup>
+    
+    <Note>
+      The `npm run setup:backend` command automatically creates a Python virtual environment using `uv sync`.
+    </Note>
+  </Step>
+
+  <Step title="Start the services">
+    Launch both frontend and backend services:
+    
+    <CodeGroup>
+    ```bash Start both services
+    # Start frontend and backend simultaneously
+    npm run dev
+    ```
+    
+    ```bash Start services separately
+    # Start backend only
+    npm run backend
+    
+    # Start frontend only (in another terminal)
+    npm run frontend
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Access the application">
+    Once the services are running, access MiroFish at:
+    
+    - **Frontend**: http://localhost:3000
+    - **Backend API**: http://localhost:5001
+  </Step>
+</Steps>
+
+## Available NPM Scripts
+
+The following scripts are available in `package.json`:
+
+| Script | Description |
+|--------|-------------|
+| `npm run setup` | Install Node.js dependencies for root and frontend |
+| `npm run setup:backend` | Install Python dependencies and create virtual environment |
+| `npm run setup:all` | Install all dependencies (Node + Python) |
+| `npm run dev` | Start both frontend and backend in development mode |
+| `npm run frontend` | Start frontend only |
+| `npm run backend` | Start backend only |
+| `npm run build` | Build frontend for production |
+
+## Development Workflow
+
+The `npm run dev` command uses `concurrently` to run both services simultaneously with color-coded output:
+- **Green**: Backend logs (Python/Flask)
+- **Cyan**: Frontend logs (Next.js)
+
+<Note>
+  Both services run in development mode with hot-reloading enabled, allowing you to see changes immediately without restarting.
+</Note>
+
+## Next Steps
+
+After successfully deploying from source:
+
+1. Review the [Environment Variables](/deployment/environment-variables) to optimize your configuration
+2. Check [Troubleshooting](/deployment/troubleshooting) if you encounter any issues
+3. Learn about [Docker deployment](/deployment/docker) for production environments

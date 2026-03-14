@@ -1,0 +1,594 @@
+---
+title: "Customization Guide"
+description: "Extend and customize MiroFish for your specific use cases"
+---
+
+## Customization Overview
+
+MiroFish is designed to be flexible and extensible. You can customize:
+
+<CardGroup cols={2}>
+  <Card title="Ontology Design" icon="diagram-project">
+    Define custom entity and relationship types for your domain
+  </Card>
+  <Card title="Agent Behaviors" icon="users">
+    Modify persona generation and activity patterns
+  </Card>
+  <Card title="Simulation Config" icon="sliders">
+    Adjust simulation parameters and platform settings
+  </Card>
+  <Card title="Report Templates" icon="file-lines">
+    Customize report structure and analysis focus
+  </Card>
+</CardGroup>
+
+## Custom Ontology Design
+
+### Understanding Ontology
+
+The **ontology** defines what entities and relationships MiroFish can extract from your seed data.
+
+**Default Ontology** (simplified):
+```json
+{
+  "node_types": [
+    {"name": "Person"},
+    {"name": "Organization"},
+    {"name": "Event"},
+    {"name": "Topic"}
+  ],
+  "edge_types": [
+    {"name": "PARTICIPATES_IN"},
+    {"name": "WORKS_FOR"},
+    {"name": "DISCUSSES"},
+    {"name": "SUPPORTS"},
+    {"name": "OPPOSES"}
+  ]
+}
+```
+
+### Creating Domain-Specific Ontologies
+
+<Tabs>
+  <Tab title="Financial Domain">
+    **Entity Types:**
+    - `Investor`
+    - `Company`
+    - `Security` (stocks, bonds)
+    - `Market Event`
+    - `Financial Indicator`
+    
+    **Relationship Types:**
+    - `INVESTS_IN`
+    - `TRADES`
+    - `COMPETES_WITH`
+    - `IMPACTS` (event impacts company)
+    - `CORRELATES_WITH`
+    
+    **Example:**
+    ```json
+    {
+      "node_types": [
+        {"name": "Investor", "description": "Individual or institutional investor"},
+        {"name": "Company", "description": "Public or private company"},
+        {"name": "Security", "description": "Stock, bond, or other financial instrument"}
+      ],
+      "edge_types": [
+        {"name": "INVESTS_IN", "description": "Investor holds position in security"},
+        {"name": "TRADES", "description": "Investor buys/sells security"}
+      ]
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Medical Domain">
+    **Entity Types:**
+    - `Patient`
+    - `Doctor`
+    - `Hospital`
+    - `Disease`
+    - `Treatment`
+    - `Symptom`
+    
+    **Relationship Types:**
+    - `DIAGNOSED_WITH`
+    - `TREATED_BY`
+    - `WORKS_AT`
+    - `PRESCRIBED`
+    - `HAS_SYMPTOM`
+    
+    **Example:**
+    ```json
+    {
+      "node_types": [
+        {"name": "Patient"},
+        {"name": "Doctor"},
+        {"name": "Disease"},
+        {"name": "Treatment"}
+      ],
+      "edge_types": [
+        {"name": "DIAGNOSED_WITH"},
+        {"name": "TREATED_BY"},
+        {"name": "PRESCRIBED"}
+      ]
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Literary Domain">
+    **Entity Types:**
+    - `Character`
+    - `Location`
+    - `Plot Event`
+    - `Theme`
+    - `Motif`
+    
+    **Relationship Types:**
+    - `LOVES`
+    - `CONFLICTS_WITH`
+    - `APPEARS_IN`
+    - `TRAVELS_TO`
+    - `SYMBOLIZES`
+    
+    **Example:**
+    ```json
+    {
+      "node_types": [
+        {"name": "Character"},
+        {"name": "Location"},
+        {"name": "Plot Event"},
+        {"name": "Theme"}
+      ],
+      "edge_types": [
+        {"name": "LOVES"},
+        {"name": "CONFLICTS_WITH"},
+        {"name": "APPEARS_IN"}
+      ]
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Applying Custom Ontology
+
+**Via API:**
+
+```bash
+curl -X POST http://localhost:5001/api/graph/ontology/generate \
+  -F "files=@my_document.pdf" \
+  -F "simulation_requirement=Analyze financial market reactions" \
+  -F "additional_context={\"ontology\": {\"node_types\": [...], \"edge_types\": [...]}}"
+```
+
+**Via Code:**
+
+```python
+from app.services.ontology_generator import OntologyGenerator
+
+ontology_gen = OntologyGenerator()
+
+custom_ontology = {
+    "node_types": [
+        {"name": "Investor"},
+        {"name": "Company"}
+    ],
+    "edge_types": [
+        {"name": "INVESTS_IN"}
+    ]
+}
+
+result = ontology_gen.generate_ontology(
+    text=document_text,
+    simulation_requirement="Predict market reactions",
+    custom_ontology=custom_ontology
+)
+```
+
+## Custom Agent Behaviors
+
+### Modifying Persona Generation
+
+**Service**: `backend/app/services/oasis_profile_generator.py`
+
+**Customization Points:**
+
+1. **Persona Prompt Template**
+
+Edit the LLM prompt that generates agent personas:
+
+```python
+# oasis_profile_generator.py (line ~150)
+
+PERSONA_PROMPT_TEMPLATE = """
+You are generating a persona for a social media simulation.
+
+Entity Information:
+- Name: {entity_name}
+- Type: {entity_type}
+- Relationships: {relationships}
+- Background: {background}
+
+Generate a detailed 2000-word persona including:
+1. **Demographics**: Age, occupation, location
+2. **Personality**: OCEAN traits, communication style
+3. **Interests**: Topics they care about
+4. **Opinions**: Stances on key issues
+5. **Behavioral Patterns**: Activity level, posting style
+
+--- YOUR CUSTOM INSTRUCTIONS HERE ---
+
+Output as JSON.
+"""
+```
+
+2. **Activity Probabilities**
+
+Adjust how active agents are:
+
+```python
+# Default configuration
+activity_config = {
+    "post_probability": 0.3,
+    "comment_probability": 0.5,
+    "vote_probability": 0.7,
+    "follow_probability": 0.2
+}
+
+# High-activity configuration
+activity_config = {
+    "post_probability": 0.6,
+    "comment_probability": 0.8,
+    "vote_probability": 0.9,
+    "follow_probability": 0.4
+}
+```
+
+3. **Personality Traits**
+
+Customize OCEAN (Big Five) personality distributions:
+
+```python
+import random
+
+def generate_personality():
+    return {
+        "openness": random.uniform(0.4, 0.9),  # Favor more open agents
+        "conscientiousness": random.uniform(0.3, 0.8),
+        "extraversion": random.uniform(0.5, 1.0),  # More extraverted
+        "agreeableness": random.uniform(0.2, 0.7),
+        "neuroticism": random.uniform(0.1, 0.5)
+    }
+```
+
+### Example: Financial Analyst Agents
+
+```python
+FINANCIAL_PERSONA_TEMPLATE = """
+You are creating a financial analyst persona.
+
+Entity: {entity_name}
+Role: {role} (e.g., retail investor, hedge fund manager, analyst)
+
+Generate a persona with:
+
+1. **Investment Philosophy**:
+   - Risk tolerance (conservative, moderate, aggressive)
+   - Strategy (value, growth, momentum, etc.)
+   - Time horizon (day trader, long-term investor)
+
+2. **Information Sources**:
+   - Preferred news outlets
+   - Technical vs. fundamental analysis preference
+   - Social media usage patterns
+
+3. **Decision-Making Style**:
+   - Rational vs. emotional
+   - Contrarian vs. trend-follower
+   - Influenced by: earnings reports, analyst ratings, market sentiment
+
+4. **Communication Style**:
+   - Optimistic vs. pessimistic
+   - Data-driven vs. narrative-driven
+   - Emoji usage, hashtag preferences
+
+Output as JSON with all fields.
+"""
+```
+
+## Simulation Configuration
+
+### Custom Platform Settings
+
+**Service**: `backend/app/services/simulation_config_generator.py`
+
+**Example: High-Activity Simulation**
+
+```json
+{
+  "env": {
+    "env_type": "reddit",
+    "max_rounds": 96,
+    "agent_num": 100,
+    "time_compression": 0.5
+  },
+  "agents": {
+    "model": "gpt-4",
+    "temperature": 0.8,
+    "activity_multiplier": 1.5
+  },
+  "simulation": {
+    "initial_events": [
+      {
+        "type": "post",
+        "content": "Breaking: Company announces Q4 earnings beat",
+        "subreddit": "r/investing"
+      }
+    ],
+    "enable_network_effects": true,
+    "viral_threshold": 10
+  }
+}
+```
+
+**Parameters Explained:**
+
+| Parameter | Default | Purpose |
+|-----------|---------|----------|
+| `max_rounds` | 48 | Simulation duration (2 rounds = 1 hour) |
+| `agent_num` | 50 | Number of agents |
+| `temperature` | 0.7 | LLM creativity (higher = more diverse) |
+| `activity_multiplier` | 1.0 | Scale all activity probabilities |
+| `initial_events` | [] | Seed posts to start simulation |
+| `viral_threshold` | 20 | Upvotes needed for content to "go viral" |
+
+### Custom Time Compression
+
+Control simulation speed:
+
+```python
+# Real-time (1 round = 30 minutes)
+time_compression = 1.0
+
+# Faster (1 round = 15 minutes)
+time_compression = 0.5
+
+# Slower (1 round = 1 hour)
+time_compression = 2.0
+```
+
+## Report Customization
+
+### Custom Report Structure
+
+**Service**: `backend/app/services/report_agent.py`
+
+**Default Outline:**
+```python
+REPORT_OUTLINE = [
+    "Executive Summary",
+    "Key Findings",
+    "Sentiment Analysis",
+    "Network Dynamics",
+    "Temporal Evolution",
+    "Recommendations"
+]
+```
+
+**Custom Financial Report:**
+```python
+FINANCIAL_REPORT_OUTLINE = [
+    "Market Summary",
+    "Price Movement Prediction",
+    "Investor Sentiment Breakdown",
+    "Key Influencers and Opinion Leaders",
+    "Risk Factors Identified",
+    "Trading Strategy Recommendations"
+]
+```
+
+**Apply Custom Outline:**
+
+```python
+from app.services.report_agent import ReportAgent
+
+report_agent = ReportAgent(
+    llm=llm,
+    graph_id=graph_id,
+    simulation_id=simulation_id,
+    custom_outline=FINANCIAL_REPORT_OUTLINE
+)
+
+report = report_agent.generate_report()
+```
+
+### Custom Analysis Focus
+
+**Example: Sentiment-Focused Report**
+
+```python
+SENTIMENT_ANALYSIS_PROMPT = """
+Analyze the sentiment evolution during the simulation.
+
+For each section:
+
+1. **Overall Sentiment Trend**:
+   - Initial sentiment (rounds 1-10)
+   - Mid-simulation shift (rounds 11-30)
+   - Final sentiment (rounds 31-48)
+   - Sentiment polarity chart (positive, neutral, negative)
+
+2. **Key Sentiment Drivers**:
+   - Which events caused sentiment shifts?
+   - Which agents influenced sentiment most?
+   - Were there echo chambers or polarization?
+
+3. **Sentiment by Demographic**:
+   - Age groups
+   - Occupations
+   - Geographic regions (if applicable)
+
+Use SearchTool to query memory, InsightForgeTool for agent details.
+"""
+```
+
+## Advanced Customizations
+
+### 1. Custom Memory Search Tools
+
+Add new tools for ReportAgent:
+
+```python
+from langchain.tools import Tool
+
+def search_by_sentiment(query: str, sentiment: str) -> str:
+    """
+    Search for posts matching a specific sentiment.
+    
+    Args:
+        query: Search query
+        sentiment: "positive", "negative", or "neutral"
+    """
+    # Implement sentiment-filtered search
+    pass
+
+sentiment_tool = Tool(
+    name="SentimentSearchTool",
+    description="Search posts by sentiment (positive, negative, neutral)",
+    func=lambda args: search_by_sentiment(**parse_args(args))
+)
+
+# Add to ReportAgent
+report_agent.tools.append(sentiment_tool)
+```
+
+### 2. Custom Action Types (OASIS)
+
+**Advanced**: Extend OASIS to support new actions.
+
+<Warning>
+This requires modifying the OASIS framework (not recommended for beginners).
+</Warning>
+
+**Example: Add "SHARE_ARTICLE" action**
+
+```python
+# In OASIS action space
+class ShareArticleAction(Action):
+    action_type = "SHARE_ARTICLE"
+    
+    def __init__(self, agent_id, article_url, comment):
+        self.agent_id = agent_id
+        self.article_url = article_url
+        self.comment = comment
+    
+    def execute(self, environment):
+        # Post article link with comment
+        environment.create_post(
+            author=self.agent_id,
+            content=f"{self.comment}\n\n{self.article_url}"
+        )
+```
+
+### 3. Custom Data Export Formats
+
+Add new export formats for reports:
+
+```python
+# backend/app/api/report.py
+
+@report_bp.route('/export/<report_id>/pdf', methods=['GET'])
+def export_pdf(report_id: str):
+    """Export report as PDF"""
+    report = ReportManager.get_report(report_id)
+    
+    # Use library like ReportLab or WeasyPrint
+    pdf_bytes = generate_pdf(report.content)
+    
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f"report_{report_id}.pdf"
+    )
+```
+
+## Example: Complete Custom Workflow
+
+**Scenario**: Financial earnings prediction
+
+<Steps>
+  <Step title="Define Financial Ontology">
+    Create custom entity types (Investor, Company, Security)
+  </Step>
+  
+  <Step title="Upload Earnings Report">
+    Provide Q4 earnings report as seed data
+  </Step>
+  
+  <Step title="Generate Investor Personas">
+    Use custom FINANCIAL_PERSONA_TEMPLATE
+  </Step>
+  
+  <Step title="Configure High-Activity Simulation">
+    Set activity_multiplier=1.5, max_rounds=96
+  </Step>
+  
+  <Step title="Add Initial Event">
+    Seed with "Breaking: Company beats earnings expectations"
+  </Step>
+  
+  <Step title="Run Dual-Platform Simulation">
+    Execute on both Reddit (r/investing) and Twitter
+  </Step>
+  
+  <Step title="Generate Custom Financial Report">
+    Use FINANCIAL_REPORT_OUTLINE for structured analysis
+  </Step>
+</Steps>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Start Small">
+    - Test customizations with small simulations first (20 agents, 12 rounds)
+    - Validate ontology extraction before full simulation
+    - Review generated personas for quality
+  </Accordion>
+  
+  <Accordion title="Version Control">
+    - Track custom prompts and configurations in Git
+    - Document why you made specific customizations
+    - Keep default configurations for comparison
+  </Accordion>
+  
+  <Accordion title="Iterate Based on Results">
+    - Review simulation outputs to refine personas
+    - Adjust activity probabilities if agents too active/passive
+    - Refine ontology if key entities are missed
+  </Accordion>
+  
+  <Accordion title="Monitor Costs">
+    - Custom high-activity configs increase LLM API costs
+    - Use cheaper models (GPT-3.5) for testing
+    - Estimate costs: agents × rounds × cost-per-call
+  </Accordion>
+</AccordionGroup>
+
+## Getting Help
+
+If you're customizing MiroFish and need support:
+
+<CardGroup cols={2}>
+  <Card title="GitHub Discussions" icon="github" href="https://github.com/666ghj/MiroFish/discussions">
+    Share your customization ideas and get feedback
+  </Card>
+  <Card title="Discord Community" icon="discord" href="https://discord.com/channels/1469200078932545606/1469201282077163739">
+    Ask questions in real-time
+  </Card>
+</CardGroup>
+
+---
+
+<Note>
+**Share Your Customizations!** If you've built something cool, consider contributing it back to the project or sharing it with the community.
+</Note>

@@ -1,0 +1,267 @@
+---
+title: "Generate Report"
+description: "Asynchronously generate simulation analysis reports using Report Agent"
+---
+
+## POST /api/report/generate
+
+Initiates an asynchronous task to generate a comprehensive analysis report for a simulation. The Report Agent will autonomously retrieve data from knowledge graphs, analyze simulation results, and create a structured report.
+
+<Warning>
+This is a time-consuming operation. The endpoint returns immediately with a `task_id` for progress tracking.
+</Warning>
+
+## Request
+
+<ParamField body="simulation_id" type="string" required>
+  The ID of the simulation to generate a report for (format: `sim_xxxx`)
+</ParamField>
+
+<ParamField body="force_regenerate" type="boolean" default={false}>
+  Force regeneration even if a report already exists for this simulation
+</ParamField>
+
+### Request Example
+
+<CodeGroup>
+```bash cURL
+curl -X POST http://localhost:5000/api/report/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "simulation_id": "sim_a1b2c3d4e5f6",
+    "force_regenerate": false
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "http://localhost:5000/api/report/generate",
+    json={
+        "simulation_id": "sim_a1b2c3d4e5f6",
+        "force_regenerate": False
+    }
+)
+
+data = response.json()
+print(f"Task ID: {data['data']['task_id']}")
+print(f"Report ID: {data['data']['report_id']}")
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:5000/api/report/generate', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    simulation_id: 'sim_a1b2c3d4e5f6',
+    force_regenerate: false
+  })
+});
+
+const data = await response.json();
+console.log('Task ID:', data.data.task_id);
+console.log('Report ID:', data.data.report_id);
+```
+</CodeGroup>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the task was successfully started
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <ResponseField name="simulation_id" type="string">
+    The simulation ID for which the report is being generated
+  </ResponseField>
+  
+  <ResponseField name="report_id" type="string">
+    The unique identifier for this report (format: `report_xxxx`)
+  </ResponseField>
+  
+  <ResponseField name="task_id" type="string">
+    The async task ID for tracking generation progress (format: `task_xxxx`)
+  </ResponseField>
+  
+  <ResponseField name="status" type="string">
+    Current status of the report generation (`generating` or `completed`)
+  </ResponseField>
+  
+  <ResponseField name="message" type="string">
+    Human-readable status message
+  </ResponseField>
+  
+  <ResponseField name="already_generated" type="boolean">
+    `true` if report already existed, `false` if new generation started
+  </ResponseField>
+</ResponseField>
+
+### Success Response (New Report)
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_a1b2c3d4e5f6",
+    "report_id": "report_x9y8z7w6v5u4",
+    "task_id": "task_m1n2o3p4q5r6",
+    "status": "generating",
+    "message": "报告生成任务已启动,请通过 /api/report/generate/status 查询进度",
+    "already_generated": false
+  }
+}
+```
+
+### Success Response (Existing Report)
+
+```json
+{
+  "success": true,
+  "data": {
+    "simulation_id": "sim_a1b2c3d4e5f6",
+    "report_id": "report_x9y8z7w6v5u4",
+    "status": "completed",
+    "message": "报告已存在",
+    "already_generated": true
+  }
+}
+```
+
+## Track Generation Progress
+
+### POST /api/report/generate/status
+
+Query the progress of a report generation task.
+
+<ParamField body="task_id" type="string">
+  The task ID returned from the generate endpoint
+</ParamField>
+
+<ParamField body="simulation_id" type="string">
+  Alternative: query by simulation ID to check for completed reports
+</ParamField>
+
+### Progress Request Example
+
+<CodeGroup>
+```bash cURL
+curl -X POST http://localhost:5000/api/report/generate/status \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task_id": "task_m1n2o3p4q5r6"
+  }'
+```
+
+```python Python
+import requests
+import time
+
+# Poll for progress
+while True:
+    response = requests.post(
+        "http://localhost:5000/api/report/generate/status",
+        json={"task_id": "task_m1n2o3p4q5r6"}
+    )
+    
+    data = response.json()["data"]
+    print(f"Progress: {data['progress']}% - {data['message']}")
+    
+    if data["status"] in ["completed", "failed"]:
+        break
+    
+    time.sleep(2)  # Poll every 2 seconds
+```
+</CodeGroup>
+
+### Progress Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "task_id": "task_m1n2o3p4q5r6",
+    "status": "processing",
+    "progress": 45,
+    "message": "[generating] 正在生成章节: 关键发现",
+    "created_at": "2026-03-14T10:30:00Z",
+    "updated_at": "2026-03-14T10:32:15Z"
+  }
+}
+```
+
+<ResponseField name="status" type="string">
+  Task status: `pending`, `processing`, `completed`, or `failed`
+</ResponseField>
+
+<ResponseField name="progress" type="integer">
+  Percentage complete (0-100)
+</ResponseField>
+
+## Error Responses
+
+### Missing simulation_id
+
+```json
+{
+  "success": false,
+  "error": "请提供 simulation_id"
+}
+```
+**Status Code**: `400`
+
+### Simulation Not Found
+
+```json
+{
+  "success": false,
+  "error": "模拟不存在: sim_invalid123"
+}
+```
+**Status Code**: `404`
+
+### Missing Knowledge Graph
+
+```json
+{
+  "success": false,
+  "error": "缺少图谱ID,请确保已构建图谱"
+}
+```
+**Status Code**: `400`
+
+### Generation Failure
+
+```json
+{
+  "success": false,
+  "error": "LLM API error: Rate limit exceeded",
+  "traceback": "Traceback (most recent call last):\n..."
+}
+```
+**Status Code**: `500`
+
+## Implementation Details
+
+### Report Generation Pipeline
+
+1. **Validation**: Verify simulation exists and has required data
+2. **Task Creation**: Create async task with unique `report_id`
+3. **Background Thread**: Launch daemon thread for generation
+4. **Agent Initialization**: Create ReportAgent with graph and simulation context
+5. **Report Planning**: Agent generates outline based on simulation requirements
+6. **Section Generation**: Generate each section with tool calls and LLM responses
+7. **Progress Updates**: Update task progress via callback at each stage
+8. **Completion**: Save final report and mark task as completed
+
+### Progress Stages
+
+- `0%` - Initializing Report Agent
+- `10%` - Planning report structure
+- `20-80%` - Generating sections (distributed evenly)
+- `90%` - Finalizing report
+- `100%` - Completed
+
+<Info>
+You can also monitor section-by-section progress using `GET /api/report/{report_id}/sections` to display partial content while generation is ongoing.
+</Info>
