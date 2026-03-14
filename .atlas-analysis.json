@@ -1,0 +1,153 @@
+{
+  "projectType": "saas",
+  "projectName": "MiroFish",
+  "projectDescription": "A multi-agent swarm intelligence engine for predicting future scenarios through high-fidelity digital world simulations",
+  "theme": "palm",
+  "primaryColor": "#ffffff",
+  "lightColor": "#45b0fb",
+  "darkColor": "#87ddfc",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/overview",
+              "concepts/workflow",
+              "concepts/knowledge-graph",
+              "concepts/multi-agent-simulation",
+              "concepts/memory-system"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/setup-environment",
+              "guides/upload-seed-data",
+              "guides/build-knowledge-graph",
+              "guides/configure-simulation",
+              "guides/run-simulation",
+              "guides/generate-reports",
+              "guides/interact-with-agents"
+            ]
+          },
+          {
+            "group": "Use Cases",
+            "pages": [
+              "use-cases/public-opinion-analysis",
+              "use-cases/financial-forecasting",
+              "use-cases/story-prediction",
+              "use-cases/policy-testing"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/source-code",
+              "deployment/docker",
+              "deployment/environment-variables",
+              "deployment/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api/introduction",
+              "api/authentication"
+            ]
+          },
+          {
+            "group": "Graph API",
+            "pages": [
+              "api/graph/overview",
+              "api/graph/projects",
+              "api/graph/build-graph",
+              "api/graph/ontology"
+            ]
+          },
+          {
+            "group": "Simulation API",
+            "pages": [
+              "api/simulation/overview",
+              "api/simulation/entities",
+              "api/simulation/profiles",
+              "api/simulation/start-simulation",
+              "api/simulation/monitor",
+              "api/simulation/interview"
+            ]
+          },
+          {
+            "group": "Report API",
+            "pages": [
+              "api/report/overview",
+              "api/report/generate",
+              "api/report/chat",
+              "api/report/export"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Resources",
+        "groups": [
+          {
+            "group": "Community",
+            "pages": [
+              "resources/contributing",
+              "resources/community",
+              "resources/faq"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/architecture",
+              "advanced/oasis-integration",
+              "advanced/zep-memory",
+              "advanced/customization"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Multi-agent swarm intelligence simulation",
+    "Knowledge graph construction with GraphRAG",
+    "Long-term memory management with Zep Cloud",
+    "Social media simulation powered by OASIS",
+    "Interactive AI-powered report generation",
+    "Real-time agent interview and interaction",
+    "Support for multiple prediction scenarios (finance, opinion, stories)",
+    "Docker deployment with environment configuration"
+  ],
+  "publicApiSurface": [
+    "POST /api/graph/build - Build knowledge graph from seed data",
+    "GET /api/graph/project/{project_id} - Get project details",
+    "POST /api/graph/ontology/generate - Generate ontology from text",
+    "GET /api/simulation/entities/{graph_id} - Get graph entities",
+    "POST /api/simulation/profiles/generate - Generate agent profiles",
+    "POST /api/simulation/start - Start multi-agent simulation",
+    "GET /api/simulation/status/{simulation_id} - Get simulation status",
+    "POST /api/simulation/interview - Interview simulation agents",
+    "POST /api/report/generate - Generate prediction report",
+    "GET /api/report/{report_id} - Get report details",
+    "POST /api/report/chat - Chat with report agent",
+    "GET /api/report/export/{report_id} - Export report as file"
+  ]
+}
